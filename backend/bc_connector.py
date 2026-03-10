@@ -1,17 +1,18 @@
 import os
 import requests
-from requests_ntlm import HttpNtlmAuth
 from dotenv import load_dotenv
-from functools import lru_cache
 from datetime import datetime, timedelta
 
 load_dotenv()
 
 BC_BASE_URL = os.getenv("BC_ODATA_URL", "https://api.businesscentral.dynamics.com/v2.0/7bd617d8-1150-4669-b1fe-3fddd532dd57/Production/ODataV4/Company('Global%20Food%20Link%20S.L')")
-BC_AUTH_TYPE = os.getenv("BC_AUTH_TYPE", "bearer")  # "bearer" o "ntlm"
-BC_TOKEN = os.getenv("BC_TOKEN", "")
-BC_USER = os.getenv("BC_USER", "")
-BC_PASSWORD = os.getenv("BC_PASSWORD", "")
+
+# OAuth2 Client Credentials
+BC_TENANT_ID = os.getenv("BC_TENANT_ID", "")
+BC_CLIENT_ID = os.getenv("BC_CLIENT_ID", "")
+BC_CLIENT_SECRET = os.getenv("BC_CLIENT_SECRET", "")
+BC_AUTHORITY = f"https://login.microsoftonline.com/{BC_TENANT_ID}/oauth2/v2.0/token"
+BC_SCOPE = "https://api.businesscentral.dynamics.com/.default"
 
 # Nombres de los Web Services publicados en BC
 WS_PALLETS = os.getenv("WS_PALLETS", "AITPalletsList")
@@ -21,23 +22,50 @@ WS_ITEM_UOM = os.getenv("WS_ITEM_UOM", "ItemUnitOfMeasure")
 WS_PROD_TRANSLATE = os.getenv("WS_PROD_TRANSLATE", "ProductTranslation")
 WS_ITEM_REF = os.getenv("WS_ITEM_REF", "ItemReference")
 
-# Cache duration
+# Cache
 CACHE_DURATION = int(os.getenv("CACHE_MINUTES", "5"))
 _cache = {}
 _cache_time = {}
 
+# Token cache
+_token = None
+_token_expiry = None
 
-def _get_auth():
-    if BC_AUTH_TYPE == "ntlm":
-        return HttpNtlmAuth(BC_USER, BC_PASSWORD)
-    return None
+
+def _get_token():
+    """Obtener token OAuth2 usando Client Credentials Flow"""
+    global _token, _token_expiry
+    
+    # Reusar token si aun es valido
+    if _token and _token_expiry and datetime.now() < _token_expiry:
+        return _token
+    
+    try:
+        response = requests.post(BC_AUTHORITY, data={
+            "grant_type": "client_credentials",
+            "client_id": BC_CLIENT_ID,
+            "client_secret": BC_CLIENT_SECRET,
+            "scope": BC_SCOPE,
+        })
+        response.raise_for_status()
+        data = response.json()
+        _token = data["access_token"]
+        expires_in = data.get("expires_in", 3600)
+        _token_expiry = datetime.now() + timedelta(seconds=expires_in - 60)
+        print(f"Token OAuth2 obtenido, expira en {expires_in}s")
+        return _token
+    except Exception as e:
+        print(f"Error obteniendo token OAuth2: {e}")
+        raise
 
 
 def _get_headers():
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
-    if BC_AUTH_TYPE == "bearer" and BC_TOKEN:
-        headers["Authorization"] = f"Bearer {BC_TOKEN}"
-    return headers
+    token = _get_token()
+    return {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
 
 
 def _fetch_odata(endpoint, params=None):
@@ -57,7 +85,6 @@ def _fetch_odata(endpoint, params=None):
             response = requests.get(
                 url,
                 headers=_get_headers(),
-                auth=_get_auth(),
                 params=params,
                 timeout=120
             )
