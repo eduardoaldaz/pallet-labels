@@ -15,12 +15,11 @@ BC_AUTHORITY = f"https://login.microsoftonline.com/{BC_TENANT_ID}/oauth2/v2.0/to
 BC_SCOPE = "https://api.businesscentral.dynamics.com/.default"
 
 # Nombres de los Web Services publicados en BC
-WS_PALLETS = os.getenv("WS_PALLETS", "AITPalletsList")
-WS_SALES_HEADER = os.getenv("WS_SALES_HEADER", "SalesOrder")
-WS_SALES_LINE = os.getenv("WS_SALES_LINE", "SalesLinePrueba")
-WS_ITEM_UOM = os.getenv("WS_ITEM_UOM", "ItemUnitOfMeasure")
-WS_PROD_TRANSLATE = os.getenv("WS_PROD_TRANSLATE", "ProductTranslation")
-WS_ITEM_REF = os.getenv("WS_ITEM_REF", "ItemReference")
+WS_PALLETS = os.getenv("WS_PALLETS", "Lista_Palets_Excel")
+WS_SALES_HEADER = os.getenv("WS_SALES_HEADER", "Pedido_venta_Excel")
+WS_SALES_LINE = os.getenv("WS_SALES_LINE", "SalesLinesPV")
+WS_ITEM_UOM = os.getenv("WS_ITEM_UOM", "Unidades_medida_producto_Excel")
+WS_ITEM_REF = os.getenv("WS_ITEM_REF", "Movs_ref_art__Excel")
 
 # Cache
 CACHE_DURATION = int(os.getenv("CACHE_MINUTES", "5"))
@@ -136,27 +135,81 @@ def fetch_item_uom():
     return [r for r in records if str(r.get("Code", "")).upper() == "CAJA"]
 
 
-def fetch_prod_translations():
-    """Fetch product translations"""
-    return _fetch_odata(WS_PROD_TRANSLATE)
-
-
 def fetch_item_references():
-    """Fetch Item References"""
-    return _fetch_odata(WS_ITEM_REF)
+    """Fetch Item References - only CAJA, selecting the currently valid one by date"""
+    records = _fetch_odata(WS_ITEM_REF)
+    today = datetime.now().date()
+    
+    # Group by Item_No, filter CAJA, pick the valid one
+    by_item = {}
+    for r in records:
+        if str(r.get("Unit_of_Measure", "")).upper() != "CAJA":
+            continue
+        item = str(r.get("Item_No", ""))
+        if item not in by_item:
+            by_item[item] = []
+        by_item[item].append(r)
+    
+    result = {}
+    for item, refs in by_item.items():
+        if len(refs) == 1:
+            result[item] = refs[0]
+        else:
+            valid = None
+            for r in refs:
+                start = r.get("Starting_Date", "")
+                end = r.get("Ending_Date", "")
+                start_date = None
+                end_date = None
+                try:
+                    if start and start != "0001-01-01":
+                        start_date = datetime.fromisoformat(str(start).replace("Z", "")).date()
+                except (ValueError, TypeError):
+                    pass
+                try:
+                    if end and end != "0001-01-01":
+                        end_date = datetime.fromisoformat(str(end).replace("Z", "")).date()
+                except (ValueError, TypeError):
+                    pass
+                
+                if not start_date and not end_date:
+                    valid = r
+                    break
+                if start_date and end_date:
+                    if start_date <= today <= end_date:
+                        valid = r
+                        break
+                elif start_date and not end_date:
+                    if start_date <= today:
+                        valid = r
+                        break
+                elif not start_date and end_date:
+                    if today <= end_date:
+                        valid = r
+                        break
+            
+            if not valid:
+                refs_with_dates = [r for r in refs if r.get("Starting_Date") and r.get("Starting_Date") != "0001-01-01"]
+                if refs_with_dates:
+                    valid = max(refs_with_dates, key=lambda x: str(x.get("Starting_Date", "")))
+                else:
+                    valid = refs[0]
+            result[item] = valid
+    
+    return result
 
 
 def get_enriched_pallets():
     """
     Fetch all tables and perform JOINs to return enriched pallet data.
     Only returns pallets from open orders (Inner Join with SalesHeader and SalesLine).
+    Description comes from SalesLine. EAN is the currently valid one by date.
     """
     pallets = fetch_pallets()
     orders = fetch_sales_headers()
     lines = fetch_sales_lines()
     units = fetch_item_uom()
-    translations = fetch_prod_translations()
-    refs = fetch_item_references()
+    ref_map = fetch_item_references()  # Already returns {item_no: valid_ref}
     
     # Build lookup maps
     order_map = {o.get("No", ""): o for o in orders}
@@ -168,18 +221,6 @@ def get_enriched_pallets():
             line_map[key] = l
     
     unit_map = {str(u.get("Item_No", "")): u for u in units}
-    
-    trans_map = {}
-    for t in translations:
-        item = str(t.get("Item_No", ""))
-        if item not in trans_map:
-            trans_map[item] = t
-    
-    ref_map = {}
-    for r in refs:
-        item = str(r.get("Item_No", ""))
-        if item not in ref_map:
-            ref_map[item] = r
     
     # Enrich pallets with Inner Join
     enriched = []
@@ -199,7 +240,6 @@ def get_enriched_pallets():
         o = order_map[sales_order]
         l = line_map[line_key]
         u = unit_map.get(item_no, {})
-        t = trans_map.get(item_no, {})
         rf = ref_map.get(item_no, {})
         
         kg_box = u.get("Qty_per_Unit_of_Measure", 0) or 0
@@ -209,7 +249,7 @@ def get_enriched_pallets():
         enriched.append({
             "id": p.get("Id"),
             "itemNo": item_no,
-            "itemDescription": p.get("Item_Description", ""),
+            "itemDescription": l.get("Description", "") or p.get("Item_Description", ""),
             "purchaseOrderNo": p.get("Purchase_Order_No", ""),
             "receiptNo": p.get("Receipt_No", ""),
             "lotNo": p.get("Lot_No", ""),
@@ -228,12 +268,10 @@ def get_enriched_pallets():
             "orderDate": o.get("Order_Date", ""),
             "shipmentDate": o.get("Shipment_Date", ""),
             "externalDocNo": o.get("External_Document_No", ""),
-            "lineDescription": l.get("Description", "") or p.get("Item_Description", ""),
             "itemRefNo": l.get("Item_Reference_No", ""),
             "lineQuantity": l.get("Quantity", 0),
             "kgPerBox": kg_box,
             "boxesPerPallet": boxes,
-            "descriptionEN": t.get("Description", ""),
             "eanCode": str(rf.get("Reference_No", "")),
         })
     
