@@ -1,10 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from typing import Optional
 import os
+import io
+import barcode
+from barcode.writer import ImageWriter
+from PIL import Image
 
 from bc_connector import get_orders_with_pallets, get_enriched_pallets, clear_cache
 
@@ -20,7 +24,35 @@ app.add_middleware(
 )
 
 
+def generate_barcode_image(data: str, width_mm: int = 90, height_mm: int = 20):
+    """Genera imagen PNG de codigo de barras Code128"""
+    Code128 = barcode.get_barcode_class('code128')
+    writer = ImageWriter()
+    writer.set_options({
+        'module_width': 0.3,
+        'module_height': height_mm,
+        'quiet_zone': 2,
+        'text_distance': 3,
+        'font_size': 10,
+        'dpi': 300,
+    })
+    code = Code128(data, writer=writer)
+    buffer = io.BytesIO()
+    code.write(buffer, options={'write_text': True})
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
 # ─── API Endpoints ───
+
+@app.get("/api/barcode")
+async def get_barcode(data: str, height: int = 20):
+    """Genera imagen de codigo de barras Code128 para GS1-128"""
+    try:
+        img_bytes = generate_barcode_image(data, height_mm=height)
+        return Response(content=img_bytes, media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error generando codigo de barras: {str(e)}")
 
 @app.get("/api/orders")
 async def get_orders():

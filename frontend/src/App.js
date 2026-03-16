@@ -65,13 +65,11 @@ function App() {
       <div class="sec"><div class="st">Info Adicional</div><div class="row"><div class="f"><div class="fl">Pedido Compra</div><div class="fv" style="font-size:12px">${p.purchaseOrderNo||"--"}</div></div><div class="f"><div class="fl">Recepcion</div><div class="fv" style="font-size:12px">${p.receiptNo||"--"}</div></div><div class="f"><div class="fl">Almacen</div><div class="fv" style="font-size:12px">${p.locationCode||"--"}</div></div></div></div>
       <div style="margin-top:auto;border-top:2px solid #000;padding-top:10px">
         <div class="st" style="text-align:center">Codigos GS1-128</div>
-        <div style="margin-top:8px;background:#f8f8f8;border-radius:4px;padding:10px;font-family:monospace;font-size:11px">
-          <div style="margin-bottom:4px">${p.gs1Line1HR||"--"}</div>
-          <div style="margin-bottom:4px">${p.gs1Line2HR||"--"}</div>
-          <div style="border-top:2px solid #000;padding-top:6px;margin-top:6px;font-size:13px;font-weight:bold">${p.gs1Line3HR||"--"}</div>
-        </div>
+        ${p.gs1Line1?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line1)}&height=12" style="max-width:100%"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line1HR}</div></div>`:""}
+        ${p.gs1Line2?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line2)}&height=12" style="max-width:100%"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line2HR}</div></div>`:""}
+        <div style="border-top:2px solid #000;padding-top:8px;margin-top:8px;text-align:center"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line3)}&height=15" style="max-width:100%"/><div style="font-family:monospace;font-size:11px;font-weight:bold;margin-top:2px">${p.gs1Line3HR}</div></div>
       </div></div></body></html>`);
-    w.document.close(); setTimeout(() => w.print(), 400);
+    w.document.close(); setTimeout(() => w.print(), 1500);
   };
 
   const printAll = () => {
@@ -82,9 +80,9 @@ function App() {
     const w = window.open("", "_blank");
     let html = `<!DOCTYPE html><html><head><style>@page{size:A4;margin:12mm}body{font-family:Arial,sans-serif;margin:0;color:#000}.lbl{border:2px solid #000;padding:16px;height:270mm;box-sizing:border-box;display:flex;flex-direction:column;page-break-after:always}.lbl:last-child{page-break-after:auto}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:10px}.sec{border-bottom:1px solid #ccc;padding:8px 0}.st{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}.row{display:flex;gap:16px;flex-wrap:wrap}.f{flex:1;min-width:100px}.fl{font-size:8px;color:#888;text-transform:uppercase}.fv{font-size:14px;font-weight:700;margin-top:1px}.big{font-size:20px}</style></head><body>`;
     pp.forEach(p => {
-      html += `<div class="lbl"><div class="hdr"><div><div style="font-size:17px;font-weight:800">GLOBAL FOOD LINK S.L.</div><div style="font-size:9px;color:#666">Etiqueta de Palet</div></div><div style="text-align:right"><div style="font-size:18px;font-weight:800;color:#2563eb">${p.salesOrderNo}</div><div style="font-size:10px;color:#666">${fmtDate(p.shipmentDate)}</div></div></div><div class="sec"><div class="st">Cliente</div><div class="row"><div class="f"><div class="fl">Nombre</div><div class="fv">${p.customerName}</div></div><div class="f"><div class="fl">N</div><div class="fv">${p.customerNo}</div></div><div class="f"><div class="fl">Pais</div><div class="fv">${p.shipToCountry}</div></div></div></div><div class="sec"><div class="st">Producto</div><div class="row"><div class="f"><div class="fl">Articulo</div><div class="fv big">${p.itemNo}</div></div><div class="f" style="flex:2"><div class="fl">Descripcion</div><div class="fv">${p.itemDescription||""}</div></div></div></div><div class="sec"><div class="st">Palet</div><div class="row"><div class="f"><div class="fl">N Palet</div><div class="fv big">${p.internalPalletNo}</div></div><div class="f"><div class="fl">Lote</div><div class="fv big">${p.lotNo}</div></div><div class="f"><div class="fl">Caducidad</div><div class="fv big">${fmtDate(p.expirationDate)}</div></div></div><div class="row" style="margin-top:8px"><div class="f"><div class="fl">Peso</div><div class="fv big">${p.initQuantity} Kg</div></div><div class="f"><div class="fl">Cajas</div><div class="fv big">${p.boxesPerPallet}</div></div><div class="f"><div class="fl">Kg/Caja</div><div class="fv">${p.kgPerBox}</div></div></div></div><div style="margin-top:auto;border-top:2px solid #000;padding-top:10px"><div class="st" style="text-align:center">Codigos GS1-128</div><div style="margin-top:8px;background:#f8f8f8;border-radius:4px;padding:10px;font-family:monospace;font-size:11px"><div style="margin-bottom:4px">${p.gs1Line1HR||"--"}</div><div style="margin-bottom:4px">${p.gs1Line2HR||"--"}</div><div style="border-top:2px solid #000;padding-top:6px;margin-top:6px;font-size:13px;font-weight:bold">${p.gs1Line3HR||"--"}</div></div></div></div>`;
+      html += `<div class="lbl"><div class="hdr"><div><div style="font-size:17px;font-weight:800">GLOBAL FOOD LINK S.L.</div><div style="font-size:9px;color:#666">Etiqueta de Palet</div></div><div style="text-align:right"><div style="font-size:18px;font-weight:800;color:#2563eb">${p.salesOrderNo}</div><div style="font-size:10px;color:#666">${fmtDate(p.shipmentDate)}</div></div></div><div class="sec"><div class="st">Cliente</div><div class="row"><div class="f"><div class="fl">Nombre</div><div class="fv">${p.customerName}</div></div><div class="f"><div class="fl">N</div><div class="fv">${p.customerNo}</div></div><div class="f"><div class="fl">Pais</div><div class="fv">${p.shipToCountry}</div></div></div></div><div class="sec"><div class="st">Producto</div><div class="row"><div class="f"><div class="fl">Articulo</div><div class="fv big">${p.itemNo}</div></div><div class="f" style="flex:2"><div class="fl">Descripcion</div><div class="fv">${p.itemDescription||""}</div></div></div></div><div class="sec"><div class="st">Palet</div><div class="row"><div class="f"><div class="fl">N Palet</div><div class="fv big">${p.internalPalletNo}</div></div><div class="f"><div class="fl">Lote</div><div class="fv big">${p.lotNo}</div></div><div class="f"><div class="fl">Caducidad</div><div class="fv big">${fmtDate(p.expirationDate)}</div></div></div><div class="row" style="margin-top:8px"><div class="f"><div class="fl">Peso</div><div class="fv big">${p.initQuantity} Kg</div></div><div class="f"><div class="fl">Cajas</div><div class="fv big">${p.boxesPerPallet}</div></div><div class="f"><div class="fl">Kg/Caja</div><div class="fv">${p.kgPerBox}</div></div></div></div><div style="margin-top:auto;border-top:2px solid #000;padding-top:10px"><div class="st" style="text-align:center">Codigos GS1-128</div>${p.gs1Line1?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line1)}&height=12" style="max-width:100%"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line1HR}</div></div>`:""} ${p.gs1Line2?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line2)}&height=12" style="max-width:100%"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line2HR}</div></div>`:""}<div style="border-top:2px solid #000;padding-top:8px;margin-top:8px;text-align:center"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line3)}&height=15" style="max-width:100%"/><div style="font-family:monospace;font-size:11px;font-weight:bold;margin-top:2px">${p.gs1Line3HR}</div></div></div></div>`;
     });
-    html += "</body></html>"; w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400);
+    html += "</body></html>"; w.document.write(html); w.document.close(); setTimeout(() => w.print(), 1500);
   };
 
   // ── LOADING ──
@@ -259,17 +257,20 @@ function App() {
               </div>
               <div>
                 <div style={{fontSize:7,color:"#999",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Codigos GS1-128</div>
-                <div style={{background:"#f8f8f8",borderRadius:4,padding:8,marginBottom:6}}>
-                  <div style={{fontSize:8,color:"#666",marginBottom:2}}>Linea 1: GTIN + Lote + Caducidad</div>
-                  <div style={{fontFamily:"monospace",fontSize:11,wordBreak:"break-all"}}>{preview.gs1Line1HR||"--"}</div>
-                </div>
-                <div style={{background:"#f8f8f8",borderRadius:4,padding:8,marginBottom:6}}>
-                  <div style={{fontSize:8,color:"#666",marginBottom:2}}>Linea 2: GTIN contenido + Cantidad</div>
-                  <div style={{fontFamily:"monospace",fontSize:11}}>{preview.gs1Line2HR||"--"}</div>
-                </div>
-                <div style={{borderTop:"2px solid #000",paddingTop:8,marginTop:6,background:"#f0f0f0",borderRadius:4,padding:8}}>
-                  <div style={{fontSize:8,color:"#666",marginBottom:2}}>Linea 3: SSCC (codigo unico del palet)</div>
-                  <div style={{fontFamily:"monospace",fontSize:14,fontWeight:700,letterSpacing:1}}>{preview.gs1Line3HR||"--"}</div>
+                {preview.gs1Line1 && <div style={{background:"#f8f8f8",borderRadius:4,padding:8,marginBottom:6,textAlign:"center"}}>
+                  <div style={{fontSize:8,color:"#666",marginBottom:4}}>Linea 1: GTIN + Lote + Caducidad</div>
+                  <img src={`/api/barcode?data=${encodeURIComponent(preview.gs1Line1)}&height=15`} alt="GS1 Line 1" style={{maxWidth:"100%",height:"auto"}} />
+                  <div style={{fontFamily:"monospace",fontSize:9,marginTop:2,color:"#444"}}>{preview.gs1Line1HR}</div>
+                </div>}
+                {preview.gs1Line2 && <div style={{background:"#f8f8f8",borderRadius:4,padding:8,marginBottom:6,textAlign:"center"}}>
+                  <div style={{fontSize:8,color:"#666",marginBottom:4}}>Linea 2: GTIN contenido + Cantidad</div>
+                  <img src={`/api/barcode?data=${encodeURIComponent(preview.gs1Line2)}&height=15`} alt="GS1 Line 2" style={{maxWidth:"100%",height:"auto"}} />
+                  <div style={{fontFamily:"monospace",fontSize:9,marginTop:2,color:"#444"}}>{preview.gs1Line2HR}</div>
+                </div>}
+                <div style={{borderTop:"2px solid #000",paddingTop:8,marginTop:6,background:"#f0f0f0",borderRadius:4,padding:8,textAlign:"center"}}>
+                  <div style={{fontSize:8,color:"#666",marginBottom:4}}>Linea 3: SSCC (codigo unico del palet)</div>
+                  <img src={`/api/barcode?data=${encodeURIComponent(preview.gs1Line3)}&height=18`} alt="SSCC" style={{maxWidth:"100%",height:"auto"}} />
+                  <div style={{fontFamily:"monospace",fontSize:12,fontWeight:700,marginTop:2,letterSpacing:1}}>{preview.gs1Line3HR}</div>
                 </div>
               </div>
             </div>
