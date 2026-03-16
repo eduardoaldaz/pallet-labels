@@ -29,11 +29,11 @@ def generate_barcode_image(data: str, width_mm: int = 90, height_mm: int = 20):
     Code128 = barcode.get_barcode_class('code128')
     writer = ImageWriter()
     writer.set_options({
-        'module_width': 0.2,
+        'module_width': 0.25,
         'module_height': height_mm,
-        'quiet_zone': 1,
-        'text_distance': 1,
-        'font_size': 6,
+        'quiet_zone': 2,
+        'text_distance': 2,
+        'font_size': 8,
         'dpi': 200,
     })
     code = Code128(data, writer=writer)

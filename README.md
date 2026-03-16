@@ -21,13 +21,13 @@ Aplicacion web para generar etiquetas de palet conectada directamente a Business
                                           └────────────────────┘
 ```
 
-## Despliegue en el servidor (192.168.1.200)
+## Despliegue en el servidor (localhost)
 
 ### Paso 1: Subir los archivos
 
 Copia la carpeta `pallet-labels` al servidor:
 ```bash
-scp -r pallet-labels/ usuario@192.168.1.200:/opt/pallet-labels/
+scp -r pallet-labels/ usuario@localhost:/opt/pallet-labels/
 ```
 
 O si usas git, sube el proyecto a un repositorio y clonalo.
@@ -76,7 +76,7 @@ source venv/bin/activate
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-Accede desde el navegador: `http://192.168.1.200:8000`
+Accede desde el navegador: `http://localhost:8000`
 
 ### Paso 5: Ejecutar como servicio (para que se inicie automaticamente)
 
@@ -133,10 +133,3 @@ sudo journalctl -u pallet-labels -f
 - El boton "Actualizar" en la app limpia la cache y recarga datos frescos
 - Solo se muestran pallets de pedidos de venta abiertos (Inner Join)
 - Solo se muestran pallets con Sales_Order_No que empiece por "PV"
-
-## Pendientes
-
-- [ ] Definir que EAN usar (consultar con operaciones)
-- [ ] Obtener prefijo GS1 para generar SSCC
-- [ ] Integrar con Label Service existente para codigos de barras reales
-- [ ] Diseno final de etiqueta aprobado por cliente
