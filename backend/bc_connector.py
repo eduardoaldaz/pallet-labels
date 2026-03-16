@@ -21,6 +21,10 @@ WS_SALES_LINE = os.getenv("WS_SALES_LINE", "SalesLinesPV")
 WS_ITEM_UOM = os.getenv("WS_ITEM_UOM", "Unidades_medida_producto_Excel")
 WS_ITEM_REF = os.getenv("WS_ITEM_REF", "Movs_ref_art__Excel")
 
+# GS1 - para generar SSCC
+GS1_PREFIX = os.getenv("GS1_PREFIX", "8495390")
+SSCC_EXTENSION_DIGIT = os.getenv("SSCC_EXTENSION_DIGIT", "0")
+
 # Cache
 CACHE_DURATION = int(os.getenv("CACHE_MINUTES", "5"))
 _cache = {}
@@ -65,6 +69,32 @@ def _get_headers():
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}",
     }
+
+
+def generate_sscc(pallet_id):
+    """
+    Genera un SSCC (Serial Shipping Container Code) de 18 digitos.
+    Estructura: Extension(1) + GS1 Prefix(7) + Serial(9) + Check(1)
+    El serial se basa en el Id del palet para que sea unico y reproducible.
+    """
+    ext = str(SSCC_EXTENSION_DIGIT)[:1]
+    prefix = str(GS1_PREFIX)
+    
+    # Serial: usar el pallet_id, rellenar con ceros hasta 9 digitos
+    serial_length = 17 - len(ext) - len(prefix)
+    serial = str(pallet_id).zfill(serial_length)[-serial_length:]
+    
+    # 17 digitos sin check digit
+    sscc_without_check = f"{ext}{prefix}{serial}"
+    
+    # Calcular digito de control (Modulo 10 GS1)
+    total = 0
+    for i, digit in enumerate(sscc_without_check):
+        weight = 3 if i % 2 == 0 else 1
+        total += int(digit) * weight
+    check_digit = (10 - (total % 10)) % 10
+    
+    return f"{sscc_without_check}{check_digit}"
 
 
 def _fetch_odata(endpoint, params=None):
@@ -246,16 +276,43 @@ def get_enriched_pallets():
         init_qty = p.get("Init_Quantity", 0) or 0
         boxes = round(init_qty / kg_box) if kg_box > 0 else 0
         
+        pallet_id = p.get("Id", 0)
+        ean_code = str(rf.get("Reference_No", ""))
+        sscc = generate_sscc(pallet_id)
+        
+        # Format expiration date for GS1: YYMMDD
+        exp_raw = p.get("Expiration_date", "")
+        exp_gs1 = ""
+        try:
+            if exp_raw:
+                if isinstance(exp_raw, str) and "T" in exp_raw:
+                    exp_date = datetime.fromisoformat(exp_raw.replace("Z", ""))
+                    exp_gs1 = exp_date.strftime("%y%m%d")
+        except (ValueError, TypeError):
+            pass
+        
+        # GS1-128 barcode data strings
+        gtin14 = ean_code.zfill(14) if ean_code else ""
+        lot_no = p.get("Lot_No", "")
+        gs1_line1 = f"01{gtin14}10{lot_no}17{exp_gs1}" if gtin14 else ""
+        gs1_line2 = f"02{gtin14}37{boxes}" if gtin14 else ""
+        gs1_line3 = f"00{sscc}"
+        
+        # Human-readable format for labels
+        gs1_line1_hr = f"(01) {gtin14} (10) {lot_no} (17) {exp_gs1}" if gtin14 else ""
+        gs1_line2_hr = f"(02) {gtin14} (37) {boxes}" if gtin14 else ""
+        gs1_line3_hr = f"(00) {sscc}"
+        
         enriched.append({
-            "id": p.get("Id"),
+            "id": pallet_id,
             "itemNo": item_no,
             "itemDescription": l.get("Description", "") or p.get("Item_Description", ""),
             "purchaseOrderNo": p.get("Purchase_Order_No", ""),
             "receiptNo": p.get("Receipt_No", ""),
-            "lotNo": p.get("Lot_No", ""),
+            "lotNo": lot_no,
             "locationCode": p.get("Location_Code", ""),
             "internalPalletNo": p.get("Internal_Pallet_No", ""),
-            "expirationDate": p.get("Expiration_date", ""),
+            "expirationDate": exp_raw,
             "baseHeight": p.get("Base_Height", ""),
             "initQuantity": init_qty,
             "outstandingQuantity": p.get("Outstanding_Quantity", 0),
@@ -272,7 +329,14 @@ def get_enriched_pallets():
             "lineQuantity": l.get("Quantity", 0),
             "kgPerBox": kg_box,
             "boxesPerPallet": boxes,
-            "eanCode": str(rf.get("Reference_No", "")),
+            "eanCode": ean_code,
+            "sscc": sscc,
+            "gs1Line1": gs1_line1,
+            "gs1Line2": gs1_line2,
+            "gs1Line3": gs1_line3,
+            "gs1Line1HR": gs1_line1_hr,
+            "gs1Line2HR": gs1_line2_hr,
+            "gs1Line3HR": gs1_line3_hr,
         })
     
     return enriched
