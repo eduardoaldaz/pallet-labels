@@ -256,7 +256,6 @@ function App() {
                   <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Boxes</div><div style={{fontSize:16,fontWeight:700}}>{preview.boxesPerPallet}</div></div>
                   <div></div>
                 </div>
-                </div>
               </div>
               <div>
                 <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,marginBottom:4}}>GS1-128</div>
