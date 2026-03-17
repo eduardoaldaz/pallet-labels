@@ -294,21 +294,13 @@ def get_enriched_pallets():
         # GS1-128 barcode data strings
         gtin14 = ean_code.zfill(14) if ean_code else ""
         lot_no = p.get("Lot_No", "")
-        
-        # (3102) Net Weight with 2 decimal places, 6 digits
-        # Example: 576 Kg -> 057600, 315.5 Kg -> 031550
-        weight_3102 = str(int(round(init_qty * 100))).zfill(6)
-        
-        # Line 1: (02) GTIN + (15) Best Before + (17) Expiry + (10) Batch
-        gs1_line1 = f"02{gtin14}15{exp_gs1}17{exp_gs1}10{lot_no}" if gtin14 else ""
-        # Line 2: (37) Quantity + (3102) Net Weight
-        gs1_line2 = f"37{boxes}3102{weight_3102}" if boxes else ""
-        # Line 3: (00) SSCC
+        gs1_line1 = f"01{gtin14}10{lot_no}17{exp_gs1}" if gtin14 else ""
+        gs1_line2 = f"02{gtin14}37{boxes}" if gtin14 else ""
         gs1_line3 = f"00{sscc}"
         
         # Human-readable format for labels
-        gs1_line1_hr = f"(02) {gtin14} (15) {exp_gs1} (17) {exp_gs1} (10) {lot_no}" if gtin14 else ""
-        gs1_line2_hr = f"(37) {boxes} (3102) {weight_3102}" if boxes else ""
+        gs1_line1_hr = f"(01) {gtin14} (10) {lot_no} (17) {exp_gs1}" if gtin14 else ""
+        gs1_line2_hr = f"(02) {gtin14} (37) {boxes}" if gtin14 else ""
         gs1_line3_hr = f"(00) {sscc}"
         
         enriched.append({
