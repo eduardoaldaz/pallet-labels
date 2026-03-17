@@ -115,7 +115,7 @@ def _fetch_odata(endpoint, params=None):
                 url,
                 headers=_get_headers(),
                 params=params,
-                timeout=120
+                timeout=300
             )
             response.raise_for_status()
             data = response.json()
@@ -285,10 +285,25 @@ def get_enriched_pallets():
         exp_gs1 = ""
         try:
             if exp_raw:
-                if isinstance(exp_raw, str) and "T" in exp_raw:
-                    exp_date = datetime.fromisoformat(exp_raw.replace("Z", ""))
+                exp_str = str(exp_raw)
+                if "T" in exp_str:
+                    exp_date = datetime.fromisoformat(exp_str.replace("Z", ""))
                     exp_gs1 = exp_date.strftime("%y%m%d")
-        except (ValueError, TypeError):
+                elif "-" in exp_str and len(exp_str) >= 10:
+                    # Format: 2028-03-30
+                    exp_date = datetime.strptime(exp_str[:10], "%Y-%m-%d")
+                    exp_gs1 = exp_date.strftime("%y%m%d")
+                elif "/" in exp_str:
+                    # Format: 30/03/2028
+                    parts = exp_str.split("/")
+                    if len(parts) == 3:
+                        exp_date = datetime(int(parts[2]), int(parts[1]), int(parts[0]))
+                        exp_gs1 = exp_date.strftime("%y%m%d")
+                elif isinstance(exp_raw, (int, float)):
+                    # Excel serial date
+                    exp_date = datetime(1899, 12, 30) + timedelta(days=int(exp_raw))
+                    exp_gs1 = exp_date.strftime("%y%m%d")
+        except (ValueError, TypeError, IndexError):
             pass
         
         # GS1-128 barcode data strings
