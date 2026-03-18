@@ -229,13 +229,13 @@ function App() {
             <div style={{background:"#fff",borderRadius:6,padding:16,color:"#000",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",maxWidth:460,margin:"0 auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",borderBottom:"3px solid #000",paddingBottom:6,marginBottom:8}}>
                 <div><div style={{fontSize:14,fontWeight:800}}>GLOBAL FOOD LINK S.L.</div></div>
-                <div style={{textAlign:"right"}}><div style={{fontSize:13,fontWeight:700}}>{preview.externalDocNo||preview.salesOrderNo}</div></div>
+                <div style={{textAlign:"right"}}><div style={{fontSize:14,fontWeight:700}}>{preview.externalDocNo||preview.salesOrderNo}</div></div>
               </div>
               <div style={{borderBottom:"1px solid #ddd",paddingBottom:5,marginBottom:5}}>
                 <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,borderBottom:"1px solid #eee",paddingBottom:2,marginBottom:3}}>Customer</div>
                 <div style={{display:"flex",gap:12}}>
                   <div style={{flex:2}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Name</div><div style={{fontSize:12,fontWeight:700}}>{preview.customerName}</div></div>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Country</div><div style={{fontSize:16,fontWeight:700}}>{preview.shipToCountry}</div></div>
+                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Country</div><div style={{fontSize:12,fontWeight:700}}>{preview.shipToCountry}</div></div>
                 </div>
               </div>
               <div style={{borderBottom:"1px solid #ddd",paddingBottom:5,marginBottom:5}}>
@@ -243,17 +243,17 @@ function App() {
                 <div style={{display:"flex",gap:8}}>
                   <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Item Code</div><div style={{fontSize:16,fontWeight:800}}>{preview.itemRefNo||preview.itemNo}</div></div>
                   <div style={{flex:2}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Description</div><div style={{fontSize:11,fontWeight:600}}>{preview.itemDescription}</div></div>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>ETIN/EAN</div><div style={{fontSize:10,fontWeight:600}}>{preview.eanCode||"--"}</div></div>
+                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>ETIN/EAN</div><div style={{fontSize:11,fontWeight:600}}>{preview.eanCode||"--"}</div></div>
                 </div>
               </div>
               <div style={{borderBottom:"1px solid #ddd",paddingBottom:6,marginBottom:6}}>
                 <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,borderBottom:"1px solid #eee",paddingBottom:2,marginBottom:3}}>Details</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>SSCC</div><div style={{fontSize:16,fontWeight:700}}>{preview.sscc||"--"}</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Batch</div><div style={{fontSize:16,fontWeight:700}}>{preview.lotNo}</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Best Before</div><div style={{fontSize:16,fontWeight:700}}>{fmtDate(preview.expirationDate)}</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Net Weight</div><div style={{fontSize:16,fontWeight:700}}>{preview.initQuantity} Kg</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Boxes</div><div style={{fontSize:16,fontWeight:700}}>{preview.boxesPerPallet}</div></div>
+                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>SSCC</div><div style={{fontSize:14,fontWeight:700}}>{preview.sscc||"--"}</div></div>
+                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Batch</div><div style={{fontSize:14,fontWeight:700}}>{preview.lotNo}</div></div>
+                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Best Before</div><div style={{fontSize:14,fontWeight:700}}>{fmtDate(preview.expirationDate)}</div></div>
+                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Net Weight</div><div style={{fontSize:14,fontWeight:700}}>{preview.initQuantity} Kg</div></div>
+                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Boxes</div><div style={{fontSize:14,fontWeight:700}}>{preview.boxesPerPallet}</div></div>
                   <div></div>
                 </div>
               </div>
