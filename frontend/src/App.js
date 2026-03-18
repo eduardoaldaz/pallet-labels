@@ -243,7 +243,7 @@ function App() {
                 <div style={{display:"flex",gap:8}}>
                   <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Code</div><div style={{fontSize:16,fontWeight:800}}>{preview.itemRefNo||preview.itemNo}</div></div>
                   <div style={{flex:2}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Description</div><div style={{fontSize:11,fontWeight:600}}>{preview.itemDescription}</div></div>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>ETIN/EAN</div><div style={{fontSize:11,fontWeight:600}}>{preview.eanCode||"--"}</div></div>
+                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>ETIN/EAN</div><div style={{fontSize:12,fontWeight:600}}>{preview.eanCode||"--"}</div></div>
                 </div>
               </div>
               <div style={{borderBottom:"1px solid #ddd",paddingBottom:6,marginBottom:6}}>
