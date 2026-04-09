@@ -145,13 +145,14 @@ def clear_cache():
 
 def fetch_pallets():
     """Fetch AIT Pallets - only those assigned to PV orders"""
-    records = _fetch_odata(WS_PALLETS)
-    return [r for r in records if r.get("Sales_Order_No", "").startswith("PV")]
+    records = _fetch_odata(WS_PALLETS, params={"$filter": "startswith(Sales_Order_No,'PV')"})
+    return records
 
 
 def fetch_sales_headers():
-    """Fetch open Sales Orders"""
-    return _fetch_odata(WS_SALES_HEADER)
+    """Fetch open Sales Orders - last 2 months only"""
+    two_months_ago = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+    return _fetch_odata(WS_SALES_HEADER, params={"$filter": f"Order_Date ge {two_months_ago}"})
 
 
 def fetch_sales_lines():
