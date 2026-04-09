@@ -132,7 +132,7 @@ function App() {
         </div>
         <div style={{padding:"0 20px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:10}}>
           {list.map(o=>(
-            <div key={o.orderNo} onClick={()=>{setSelOrder(o.orderNo);setSelPallets(new Set());setPreview(null)}}
+            <div key={o.orderNo} onClick={async ()=>{setSelOrder(o.orderNo);setSelPallets(new Set());setPreview(null);const res = await fetch(`${API}/orders/${o.orderNo}`);const orderData = await res.json();setData(prev => ({...prev, orders: prev.orders.map(x => x.orderNo === o.orderNo ? orderData : x)}));}}
               style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,cursor:"pointer"}}
               onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>

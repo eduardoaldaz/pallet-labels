@@ -143,15 +143,13 @@ def clear_cache():
     _cache_time.clear()
 
 
-def fetch_pallets(sales_order_no=None):
-    """Fetch AIT Pallets - filtered by specific order"""
-    if sales_order_no:
-        today = datetime.now().strftime("%Y-%m-%d")
-        records = _fetch_odata(WS_PALLETS, params={
-            "$filter": f"Sales_Order_No eq '{sales_order_no}' and Expiration_date ge {today}"
-        })
-        return records
-    return []
+def fetch_pallets():
+    """Fetch AIT Pallets - valid expiration, PV only"""
+    today = datetime.now().strftime("%Y-%m-%d")
+    records = _fetch_odata(WS_PALLETS, params={
+        "$filter": f"Expiration_date ge {today}"
+    })
+    return [r for r in records if r.get("Sales_Order_No", "").startswith("PV")]
 
 
 def fetch_sales_headers():
@@ -235,13 +233,13 @@ def fetch_item_references():
     return result
 
 
-def get_enriched_pallets(sales_order_no=None):
+def get_enriched_pallets():
     """
     Fetch all tables and perform JOINs to return enriched pallet data.
     Only returns pallets from open orders (Inner Join with SalesHeader and SalesLine).
     Description comes from SalesLine. EAN is the currently valid one by date.
     """
-    pallets = fetch_pallets(sales_order_no)
+    pallets = fetch_pallets()
     orders = fetch_sales_headers()
     lines = fetch_sales_lines()
     units = fetch_item_uom()
@@ -372,19 +370,34 @@ def get_enriched_pallets(sales_order_no=None):
 
 
 def get_orders_with_pallets():
-    orders = fetch_sales_headers()
+    """
+    Returns enriched pallets grouped by order.
+    """
+    enriched = get_enriched_pallets()
+    
+    groups = {}
+    for p in enriched:
+        order_no = p["salesOrderNo"]
+        if order_no not in groups:
+            groups[order_no] = {
+                "orderNo": order_no,
+                "customerName": p["customerName"],
+                "customerNo": p["customerNo"],
+                "shipToCountry": p["shipToCountry"],
+                "shipmentDate": p["shipmentDate"],
+                "orderDate": p["orderDate"],
+                "pallets": [],
+                "items": set(),
+            }
+        groups[order_no]["pallets"].append(p)
+        groups[order_no]["items"].add(p["itemNo"])
+    
+    # Convert sets to counts
     result = []
-    for o in orders:
-        result.append({
-            "orderNo": o.get("No", ""),
-            "customerName": o.get("Sell_to_Customer_Name", ""),
-            "customerNo": o.get("Sell_to_Customer_No", ""),
-            "shipToCountry": o.get("Ship_to_Country_Region_Code", ""),
-            "shipmentDate": o.get("Shipment_Date", ""),
-            "orderDate": o.get("Order_Date", ""),
-            "externalDocNo": o.get("External_Document_No", ""),
-            "pallets": [],
-            "itemCount": 0,
-        })
+    for g in groups.values():
+        g["itemCount"] = len(g["items"])
+        del g["items"]
+        result.append(g)
+    
     result.sort(key=lambda x: x["orderNo"], reverse=True)
     return result

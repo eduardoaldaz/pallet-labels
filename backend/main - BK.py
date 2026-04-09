@@ -71,14 +71,12 @@ async def get_orders():
 
 @app.get("/api/orders/{order_no}")
 async def get_order(order_no: str):
+    """Retorna un pedido especifico con sus pallets"""
     try:
         orders = get_orders_with_pallets()
         order = next((o for o in orders if o["orderNo"] == order_no), None)
         if not order:
             raise HTTPException(status_code=404, detail=f"Pedido {order_no} no encontrado")
-        # Load pallets on demand
-        order["pallets"] = get_enriched_pallets(order_no)
-        order["itemCount"] = len(set(p["itemNo"] for p in order["pallets"]))
         return order
     except HTTPException:
         raise
