@@ -243,7 +243,10 @@ def get_enriched_pallets(sales_order_no=None):
     """
     pallets = fetch_pallets(sales_order_no)
     orders = fetch_sales_headers()
-    lines = fetch_sales_lines()
+    if sales_order_no:
+        lines = _fetch_odata(WS_SALES_LINE, params={"$filter": f"Document_No eq '{sales_order_no}'"})
+    else:
+        lines = fetch_sales_lines()
     units = fetch_item_uom()
     ref_map = fetch_item_references()  # Already returns {item_no: valid_ref}
     
