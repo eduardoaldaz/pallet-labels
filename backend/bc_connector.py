@@ -144,8 +144,15 @@ def clear_cache():
 
 
 def fetch_pallets():
-    """Fetch AIT Pallets - only those assigned to PV orders"""
-    records = _fetch_odata(WS_PALLETS, params={"$filter": "startswith(Sales_Order_No,'PV')"})
+    """Fetch AIT Pallets - only PV with valid expiration"""
+    today = datetime.now().strftime("%Y-%m-%d")
+    try:
+        records = _fetch_odata(WS_PALLETS, params={
+            "$filter": f"startswith(Sales_Order_No,'PV') and Expiration_date ge {today}"
+        })
+    except:
+        records = _fetch_odata(WS_PALLETS)
+        records = [r for r in records if r.get("Sales_Order_No", "").startswith("PV")]
     return records
 
 
