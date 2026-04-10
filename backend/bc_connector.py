@@ -375,11 +375,33 @@ def get_enriched_pallets(sales_order_no=None):
 
 
 def get_orders_with_pallets():
+    """Returns orders with pallet counts (lightweight, no full enrichment)"""
     orders = fetch_sales_headers()
+    
+    # Lightweight fetch: only get Sales_Order_No and Item_No for counting
+    today = datetime.now().strftime("%Y-%m-%d")
+    all_pallets = _fetch_odata(WS_PALLETS, params={
+        "$filter": f"Expiration_date ge {today}",
+        "$select": "Sales_Order_No,Item_No"
+    })
+    
+    # Count pallets and items per order
+    counts = {}
+    for p in all_pallets:
+        so = p.get("Sales_Order_No", "")
+        if not so.startswith("PV"):
+            continue
+        if so not in counts:
+            counts[so] = {"pallets": 0, "items": set()}
+        counts[so]["pallets"] += 1
+        counts[so]["items"].add(p.get("Item_No", ""))
+    
     result = []
     for o in orders:
+        no = o.get("No", "")
+        c = counts.get(no, {"pallets": 0, "items": set()})
         result.append({
-            "orderNo": o.get("No", ""),
+            "orderNo": no,
             "customerName": o.get("Sell_to_Customer_Name", ""),
             "customerNo": o.get("Sell_to_Customer_No", ""),
             "shipToCountry": o.get("Ship_to_Country_Region_Code", ""),
@@ -387,7 +409,11 @@ def get_orders_with_pallets():
             "orderDate": o.get("Order_Date", ""),
             "externalDocNo": o.get("External_Document_No", ""),
             "pallets": [],
-            "itemCount": 0,
+            "itemCount": len(c["items"]),
+            "palletCount": c["pallets"],
         })
+    
+    # Only return orders that have pallets
+    result = [r for r in result if r["palletCount"] > 0]
     result.sort(key=lambda x: x["orderNo"], reverse=True)
     return result

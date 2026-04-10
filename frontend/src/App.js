@@ -137,7 +137,7 @@ function App() {
               onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
                 <span style={{color:C.accent,fontSize:16,fontWeight:700}}>{o.orderNo}</span>
-                <span style={{background:"rgba(59,130,246,0.12)",color:C.accent,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:600}}>{o.pallets.length} pallets</span>
+                <span style={{background:"rgba(59,130,246,0.12)",color:C.accent,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:600}}>{o.palletCount || o.pallets.length} pallets</span>
               </div>
               <div style={{color:C.white,fontSize:13,fontWeight:500,marginBottom:4}}>{o.customerName}</div>
               <div style={{display:"flex",gap:14,color:C.muted,fontSize:11}}>
