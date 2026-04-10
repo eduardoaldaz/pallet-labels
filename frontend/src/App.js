@@ -23,6 +23,21 @@ function App() {
   const [search, setSearch] = useState("");
   const [selPallets, setSelPallets] = useState(new Set());
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderParam = params.get('order');
+    if (orderParam && data && !selOrder) {
+      setSelOrder(orderParam);
+      setSelPallets(new Set());
+      setPreview(null);
+      fetch(`${API}/orders/${orderParam}`)
+        .then(res => res.json())
+        .then(orderData => {
+          setData(prev => ({...prev, orders: prev.orders.map(x => x.orderNo === orderParam ? orderData : x)}));
+        });
+    }
+  }, [data]);
+  
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
