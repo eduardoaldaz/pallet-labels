@@ -282,7 +282,7 @@ def get_enriched_pallets(sales_order_no=None):
         rf = ref_map.get(item_no, {})
         
         kg_box = u.get("Qty_per_Unit_of_Measure", 0) or 0
-        init_qty = p.get("Qty_to_Sales", 0) or 0
+        init_qty = p.get("Qty_to_sales", 0) or 0
         boxes = round(init_qty / kg_box) if kg_box > 0 else 0
         
         pallet_id = p.get("Id", 0)
