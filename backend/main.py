@@ -309,7 +309,7 @@ async def send_email(req: EmailRequest):
         msg['To'] = email_to
         msg['Subject'] = f"Etiquetas Palet - {ext_doc} - {customer}"
         
-        body = f"Buen día. \n\nSe adjuntan etiquetas de palet para el pedido {ext_doc} del cliente {customer}.\n\nTotal pallets: {len(pallets)} \n\nSaludos Cordiales. \nGlobal Food Link SL"
+        body = f"Buen día. \nSe adjuntan etiquetas de palet para el pedido {ext_doc} del cliente {customer}.\n\nTotal pallets: {len(pallets)} \n\nSaludos Cordiales. \nGlobal Food Link SL"
         msg.attach(MIMEText(body, 'plain'))
         
         attachment = MIMEBase('application', 'pdf')
@@ -323,7 +323,7 @@ async def send_email(req: EmailRequest):
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.send_message(msg)
         
-        return {"status": "ok", "message": f"Email con PDF enviado a {email_to}"}
+        return {"status": "ok", "message": f"Email con Email enviado a {email_to}"}
     except HTTPException:
         raise
     except Exception as e:
