@@ -37,7 +37,7 @@ function App() {
         });
     }
   }, [data]);
-  
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -95,6 +95,86 @@ function App() {
       html += `<div class="lbl"><div class="hdr"><div><div style="font-size:18px;font-weight:800">GLOBAL FOOD LINK S.L.</div></div><div style="text-align:right"><div style="font-size:18px;font-weight:700">${p.externalDocNo||p.salesOrderNo}</div></div></div><div class="sec"><div class="st">Customer</div><div class="row"><div class="f" style="flex:2"><div class="fl">Name</div><div class="fv">${p.customerName}</div></div><div class="f"><div class="fl">Country</div><div class="fv big">${p.shipToCountry}</div></div></div></div><div class="sec"><div class="st">Item</div><div class="row"><div class="f"><div class="fl">Code</div><div class="fv big">${p.itemRefNo||p.itemNo}</div></div><div class="f" style="flex:2"><div class="fl">Description</div><div class="fv">${p.itemDescription||""}</div></div><div class="f"><div class="fl">ETIN/EAN</div><div class="fv" style="font-size:13px">${p.eanCode||"--"}</div></div></div></div><div class="sec"><div class="st">Details</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><div class="fl">SSCC</div><div class="fv big">${p.sscc||"--"}</div></div><div><div class="fl">Batch</div><div class="fv big">${p.lotNo}</div></div><div><div class="fl">Best Before</div><div class="fv big">${fmtDate(p.expirationDate)}</div></div><div><div class="fl">Net Weight</div><div class="fv big">${p.initQuantity} Kg</div></div><div><div class="fl">Boxes</div><div class="fv big">${p.boxesPerPallet}</div></div><div></div></div></div><div style="border-top:2px solid #000;padding-top:8px;margin-top:12px"><div class="st" style="text-align:center">GS1-128</div>${p.gs1Line1?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line1)}&height=14" style="width:90%;height:75px"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line1HR}</div></div>`:""} ${p.gs1Line2?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line2)}&height=14" style="width:90%;height:75px"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line2HR}</div></div>`:""}<div style="border-top:2px solid #000;padding-top:8px;margin-top:8px;text-align:center"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line3)}&height=16" style="width:90%;height:85px"/><div style="font-family:monospace;font-size:11px;font-weight:bold;margin-top:2px">${p.gs1Line3HR}</div></div></div></div>`;
     });
     html += "</body></html>"; w.document.write(html); w.document.close(); setTimeout(() => w.print(), 1500);
+  };
+
+  const generateLabelHTML = (p) => {
+    return `<!DOCTYPE html><html><head><style>
+      @page{size:A4;margin:12mm}body{font-family:Arial,sans-serif;margin:0;color:#000}
+      .lbl{border:2px solid #000;padding:16px;box-sizing:border-box}
+      .hdr{display:flex;justify-content:space-between;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:10px}
+      .sec{border-bottom:1px solid #ccc;padding:8px 0}.st{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px}
+      .row{display:flex;gap:16px;flex-wrap:wrap}.f{flex:1;min-width:100px}
+      .fl{font-size:8px;color:#888;text-transform:uppercase}.fv{font-size:14px;font-weight:700;margin-top:1px}.big{font-size:20px}
+    </style></head><body><div class="lbl">
+      <div class="hdr"><div><div style="font-size:18px;font-weight:800">GLOBAL FOOD LINK S.L.</div></div>
+      <div style="text-align:right"><div style="font-size:16px;font-weight:700">${p.externalDocNo||p.salesOrderNo}</div></div></div>
+      <div class="sec"><div class="st">Customer</div><div class="row"><div class="f" style="flex:2"><div class="fl">Name</div><div class="fv">${p.customerName}</div></div><div class="f"><div class="fl">Country</div><div class="fv big">${p.shipToCountry}</div></div></div></div>
+      <div class="sec"><div class="st">Item</div><div class="row"><div class="f"><div class="fl">Item Code</div><div class="fv big">${p.itemRefNo||p.itemNo}</div></div><div class="f" style="flex:2"><div class="fl">Description</div><div class="fv">${p.itemDescription||""}</div></div><div class="f"><div class="fl">ETIN/EAN</div><div class="fv" style="font-size:12px">${p.eanCode||"--"}</div></div></div></div>
+      <div class="sec"><div class="st">Details</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><div class="fl">SSCC</div><div class="fv big">${p.sscc||"--"}</div></div><div><div class="fl">Batch</div><div class="fv big">${p.lotNo}</div></div><div><div class="fl">Best Before</div><div class="fv big">${fmtDate(p.expirationDate)}</div></div><div><div class="fl">Net Weight</div><div class="fv big">${p.initQuantity} Kg</div></div><div><div class="fl">Boxes</div><div class="fv big">${p.boxesPerPallet}</div></div><div></div></div></div>
+      <div style="border-top:2px solid #000;padding-top:8px;margin-top:12px">
+        <div class="st" style="text-align:center">GS1-128</div>
+        ${p.gs1Line1?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line1)}&height=14" style="width:90%;height:75px"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line1HR}</div></div>`:""}
+        ${p.gs1Line2?`<div style="text-align:center;margin:8px 0"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line2)}&height=14" style="width:90%;height:75px"/><div style="font-family:monospace;font-size:9px;margin-top:2px">${p.gs1Line2HR}</div></div>`:""}
+        <div style="border-top:2px solid #000;padding-top:8px;margin-top:8px;text-align:center"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line3)}&height=16" style="width:90%;height:85px"/><div style="font-family:monospace;font-size:11px;font-weight:bold;margin-top:2px">${p.gs1Line3HR}</div></div>
+      </div></div></body></html>`;
+  };
+
+  const downloadLabels = () => {
+    if (!data || !selOrder) return;
+    const order = data.orders.find(o => o.orderNo === selOrder);
+    if (!order) return;
+    const pp = selPallets.size > 0 ? order.pallets.filter(p => selPallets.has(p.id)) : order.pallets;
+    let html = `<!DOCTYPE html><html><head><style>@page{size:A4;margin:12mm}body{font-family:Arial,sans-serif;margin:0;color:#000}.lbl{border:2px solid #000;padding:16px;box-sizing:border-box;page-break-after:always}.lbl:last-child{page-break-after:auto}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:10px}.sec{border-bottom:1px solid #ccc;padding:8px 0}.st{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px}.row{display:flex;gap:16px;flex-wrap:wrap}.f{flex:1;min-width:100px}.fl{font-size:8px;color:#888;text-transform:uppercase}.fv{font-size:14px;font-weight:700;margin-top:1px}.big{font-size:20px}</style></head><body>`;
+    pp.forEach(p => { html += generateLabelHTML(p).replace(/<!DOCTYPE html>.*?<body>/s, '').replace('</body></html>',''); });
+    html += "</body></html>";
+    const blob = new Blob([html], {type: 'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `etiquetas_${selOrder}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const sendEmail = async () => {
+    if (!data || !selOrder) return;
+    const order = data.orders.find(o => o.orderNo === selOrder);
+    if (!order || !order.pallets.length) return;
+    const email = order.pallets[0].locationEmail;
+    if (!email) { alert("No hay email configurado para el almacen de este pedido"); return; }
+    if (!window.confirm(`Enviar etiquetas a: ${email}?`)) return;
+    const pp = selPallets.size > 0 ? order.pallets.filter(p => selPallets.has(p.id)) : order.pallets;
+    let html = `<html><head><style>body{font-family:Arial,sans-serif;color:#000}.lbl{border:2px solid #000;padding:16px;margin-bottom:20px}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:10px}.sec{border-bottom:1px solid #ccc;padding:8px 0}.st{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:4px}.fl{font-size:8px;color:#888;text-transform:uppercase}.fv{font-size:14px;font-weight:700}.big{font-size:20px}</style></head><body>`;
+    html += `<p>Adjunto las etiquetas de palet para el pedido <strong>${order.pallets[0].externalDocNo||selOrder}</strong>.</p>`;
+    pp.forEach(p => {
+      html += `<div class="lbl">
+        <div class="hdr"><div><strong style="font-size:18px">GLOBAL FOOD LINK S.L.</strong></div><div style="text-align:right"><strong style="font-size:16px">${p.externalDocNo||p.salesOrderNo}</strong></div></div>
+        <div class="sec"><div class="st">Customer</div><div><span class="fl">Name: </span><strong>${p.customerName}</strong> | <span class="fl">Country: </span><strong>${p.shipToCountry}</strong></div></div>
+        <div class="sec"><div class="st">Item</div><div><span class="fl">Code: </span><strong class="big">${p.itemRefNo||p.itemNo}</strong> | <span class="fl">Desc: </span>${p.itemDescription||""} | <span class="fl">EAN: </span>${p.eanCode||"--"}</div></div>
+        <div class="sec"><div class="st">Details</div>
+        <div><span class="fl">SSCC: </span><strong>${p.sscc||"--"}</strong> | <span class="fl">Batch: </span><strong class="big">${p.lotNo}</strong> | <span class="fl">Best Before: </span><strong class="big">${fmtDate(p.expirationDate)}</strong></div>
+        <div><span class="fl">Net Weight: </span><strong class="big">${p.initQuantity} Kg</strong> | <span class="fl">Boxes: </span><strong class="big">${p.boxesPerPallet}</strong></div></div>
+        <div style="border-top:2px solid #000;padding-top:8px;margin-top:8px"><div class="st">GS1-128</div>
+        ${p.gs1Line1?`<div><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line1)}&height=14" style="width:90%;height:60px"/><div style="font-family:monospace;font-size:9px">${p.gs1Line1HR}</div></div>`:""}
+        ${p.gs1Line2?`<div><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line2)}&height=14" style="width:90%;height:60px"/><div style="font-family:monospace;font-size:9px">${p.gs1Line2HR}</div></div>`:""}
+        <div style="border-top:2px solid #000;padding-top:6px;margin-top:6px"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line3)}&height=16" style="width:90%;height:70px"/><div style="font-family:monospace;font-size:11px;font-weight:bold">${p.gs1Line3HR}</div></div>
+        </div></div>`;
+    });
+    html += "</body></html>";
+    try {
+      const res = await fetch(`${API}/send-email`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          to: email,
+          subject: `Etiquetas Palet - ${order.pallets[0].externalDocNo||selOrder} - ${order.customerName}`,
+          html: html
+        })
+      });
+      const result = await res.json();
+      if (res.ok) { alert(`Email enviado a ${email}`); }
+      else { alert(`Error: ${result.detail}`); }
+    } catch (err) { alert(`Error de conexion: ${err.message}`); }
   };
 
   // ── LOADING ──
@@ -186,8 +266,12 @@ function App() {
         <div style={{display:"flex",gap:8}}>
           <button onClick={toggleAll} style={{background:"none",border:`1px solid ${C.border}`,color:C.text,padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:11}}>
             {selPallets.size===order.pallets.length?"Deseleccionar":"Seleccionar todo"}</button>
-          <button onClick={printAll} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
-            Imprimir {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button>
+          {/* <button onClick={printAll} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
+            Imprimir {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button> */}
+          <button onClick={downloadLabels} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
+            Descargar {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button>
+          <button onClick={sendEmail} style={{background:C.green,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
+            Enviar email</button>
         </div>
       </div>
       <div style={{display:"flex",height:"calc(100vh - 53px)"}}>
@@ -237,7 +321,8 @@ function App() {
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
               <h3 style={{color:C.white,fontSize:14,fontWeight:600,margin:0}}>Vista previa</h3>
               <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>printLabel(preview)} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Imprimir</button>
+                {/* <button onClick={()=>printLabel(preview)} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Imprimir</button> */}
+                <button onClick={()=>{const html=generateLabelHTML(preview);const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`etiqueta_${preview.internalPalletNo}.html`;a.click();URL.revokeObjectURL(url)}} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar</button>
                 <button onClick={()=>setPreview(null)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:16}}>X</button>
               </div>
             </div>
