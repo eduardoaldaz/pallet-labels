@@ -121,11 +121,14 @@ function App() {
 
   const downloadLabels = async () => {
     if (!selOrder) return;
+    const order = data.orders.find(o => o.orderNo === selOrder);
+    if (!order) return;
+    const palletIds = selPallets.size > 0 ? Array.from(selPallets) : null;
     try {
       const res = await fetch(`${API}/generate-pdf`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ orderNo: selOrder, palletIds: null })
+        body: JSON.stringify({ orderNo: selOrder, palletIds: palletIds })
       });
       if (!res.ok) { alert("Error generando PDF"); return; }
       const blob = await res.blob();
