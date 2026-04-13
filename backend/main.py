@@ -274,7 +274,7 @@ async def gen_pdf(req: PdfRequest):
             pallets = [p for p in pallets if p['id'] in req.palletIds]
         if not pallets:
             raise HTTPException(status_code=404, detail="No pallets found")
-        pdf_bytes = generate_pdf(pallets)
+        pdf_bytes = bytes(generate_pdf(pallets))
         return Response(content=pdf_bytes, media_type="application/pdf",
                        headers={"Content-Disposition": f"attachment; filename=etiquetas_{req.orderNo}.pdf"})
     except HTTPException:
@@ -300,7 +300,7 @@ async def send_email(req: EmailRequest):
         if not email_to:
             raise HTTPException(status_code=400, detail="No hay email configurado para el almacen")
         
-        pdf_bytes = generate_pdf(pallets)
+        pdf_bytes = bytes(generate_pdf(pallets))
         ext_doc = pallets[0].get('externalDocNo') or req.orderNo
         customer = pallets[0].get('customerName', '')
         
