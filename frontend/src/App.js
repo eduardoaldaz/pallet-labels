@@ -156,7 +156,7 @@ function App() {
         body: JSON.stringify({ orderNo: selOrder, palletIds })
       });
       const result = await res.json();
-      if (res.ok) { alert(`PDF enviado a ${email}`); }
+      if (res.ok) { alert(`Email enviado a ${email}`); }
       else { alert(`Error: ${result.detail}`); }
     } catch (err) { alert("Error: " + err.message); }
   };
