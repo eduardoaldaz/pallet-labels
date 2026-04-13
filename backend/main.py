@@ -309,7 +309,7 @@ async def send_email(req: EmailRequest):
         msg['To'] = email_to
         msg['Subject'] = f"Etiquetas Palet - {ext_doc} - {customer}"
         
-        body = f"Adjunto las etiquetas de palet para el pedido {ext_doc} del cliente {customer}.\n\nTotal pallets: {len(pallets)}"
+        body = f"Buen día. \n\nSe adjuntan etiquetas de palet para el pedido {ext_doc} del cliente {customer}.\n\nTotal pallets: {len(pallets)} \n\nSaludos Cordiales. \n\nGlobal Food Link SL"
         msg.attach(MIMEText(body, 'plain'))
         
         attachment = MIMEBase('application', 'pdf')
