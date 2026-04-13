@@ -20,6 +20,7 @@ WS_SALES_HEADER = os.getenv("WS_SALES_HEADER", "Pedido_venta_Excel")
 WS_SALES_LINE = os.getenv("WS_SALES_LINE", "SalesLinesPV")
 WS_ITEM_UOM = os.getenv("WS_ITEM_UOM", "Unidades_medida_producto_Excel")
 WS_ITEM_REF = os.getenv("WS_ITEM_REF", "Movs_ref_art__Excel")
+WS_LOCATIONS = os.getenv("WS_LOCATIONS", "Ficha_almacén_Excel")
 
 # GS1 - para generar SSCC
 GS1_PREFIX = os.getenv("GS1_PREFIX", "8495390")
@@ -234,6 +235,10 @@ def fetch_item_references():
     
     return result
 
+def fetch_locations():
+    """Fetch Locations with email"""
+    records = _fetch_odata(WS_LOCATIONS)
+    return {str(r.get("Code", "")): r for r in records}
 
 def get_enriched_pallets(sales_order_no=None):
     """
@@ -249,6 +254,7 @@ def get_enriched_pallets(sales_order_no=None):
         lines = fetch_sales_lines()
     units = fetch_item_uom()
     ref_map = fetch_item_references()  # Already returns {item_no: valid_ref}
+    loc_map = fetch_locations()
     
     # Build lookup maps
     order_map = {o.get("No", ""): o for o in orders}
@@ -369,6 +375,8 @@ def get_enriched_pallets(sales_order_no=None):
             "gs1Line1HR": gs1_line1_hr,
             "gs1Line2HR": gs1_line2_hr,
             "gs1Line3HR": gs1_line3_hr,
+            "locationEmail": loc_map.get(p.get("Location_Code", ""), {}).get("E_Mail", ""),
+            "locationName": loc_map.get(p.get("Location_Code", ""), {}).get("Name", ""),
         })
     
     return enriched

@@ -4,13 +4,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from typing import Optional
+from barcode.writer import ImageWriter
+from PIL import Image
+from bc_connector import get_orders_with_pallets, get_enriched_pallets, clear_cache
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import os
 import io
 import barcode
-from barcode.writer import ImageWriter
-from PIL import Image
+import smtplib
 
-from bc_connector import get_orders_with_pallets, get_enriched_pallets, clear_cache
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.office365.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+SMTP_FROM = os.getenv("SMTP_FROM", "")
 
 app = FastAPI(title="Pallet Label Service", version="1.0.0")
 
@@ -109,6 +117,29 @@ async def refresh_data():
 async def health():
     return {"status": "ok", "service": "pallet-labels"}
 
+class EmailRequest(BaseModel):
+    to: str
+    subject: str
+    html: str
+
+@app.post("/api/send-email")
+async def send_email(req: EmailRequest):
+    """Send label by email"""
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['From'] = SMTP_FROM
+        msg['To'] = req.to
+        msg['Subject'] = req.subject
+        msg.attach(MIMEText(req.html, 'html'))
+        
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+        
+        return {"status": "ok", "message": f"Email enviado a {req.to}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error enviando email: {str(e)}")
 
 # ─── Servir el frontend (React build) ───
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
