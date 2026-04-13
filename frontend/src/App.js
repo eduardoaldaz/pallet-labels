@@ -122,19 +122,23 @@ function App() {
   const downloadLabels = async () => {
     if (!data || !selOrder) return;
     const order = data.orders.find(o => o.orderNo === selOrder);
-    if (!order) return;
-    const palletIds = selPallets.size > 0 ? Array.from(selPallets) : null;
+    if (!order) { alert("Pedido no encontrado"); return; }
+    const palletIds = selPallets.size > 0 ? order.pallets.filter(p => selPallets.has(p.id)).map(p => p.id) : null;
     try {
       const res = await fetch(`${API}/generate-pdf`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ orderNo: selOrder, palletIds })
       });
-      if (!res.ok) { alert("Error generando PDF"); return; }
+      if (!res.ok) { 
+        const err = await res.json(); 
+        alert("Error: " + (err.detail || "Error generando PDF")); 
+        return; 
+      }
       const blob = await res.blob();
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(new Blob([blob], {type: 'application/pdf'}));
-      link.download = `etiquetas_${order.pallets[0]?.externalDocNo || selOrder}.pdf`;
+      link.download = `etiquetas_${selOrder}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
