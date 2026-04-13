@@ -249,12 +249,8 @@ function App() {
             {selPallets.size===order.pallets.length?"Deseleccionar":"Seleccionar todo"}</button>
           {/* <button onClick={printAll} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
             Imprimir {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button> */}
-          <button onClick={async ()=>{
-                  if(!preview) return;
-                  const res = await fetch(`${API}/generate-pdf`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderNo:selOrder,palletIds:[preview.id]})});
-                  if(res.ok){const blob=await res.blob();const link=document.createElement('a');link.href=window.URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));link.download=`etiqueta_${preview.internalPalletNo}.pdf`;document.body.appendChild(link);link.click();document.body.removeChild(link)}
-                  else alert("Error generando PDF")
-                }} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar PDF</button>
+          <button onClick={downloadLabels} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
+            Descargar PDF</button>
           <button onClick={sendEmail} style={{background:C.green,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
             Enviar email</button>
         </div>
@@ -307,7 +303,12 @@ function App() {
               <h3 style={{color:C.white,fontSize:14,fontWeight:600,margin:0}}>Vista previa</h3>
               <div style={{display:"flex",gap:6}}>
                 {/* <button onClick={()=>printLabel(preview)} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Imprimir</button> */}
-                <button onClick={()=>{const html=generateLabelHTML(preview);const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`etiqueta_${preview.internalPalletNo}.html`;a.click();URL.revokeObjectURL(url)}} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar</button>
+                <button onClick={async ()=>{
+                  if(!preview) return;
+                  const res = await fetch(`${API}/generate-pdf`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderNo:selOrder,palletIds:[preview.id]})});
+                  if(res.ok){const blob=await res.blob();const link=document.createElement('a');link.href=window.URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));link.download=`etiqueta_${preview.internalPalletNo}.pdf`;document.body.appendChild(link);link.click();document.body.removeChild(link)}
+                  else alert("Error generando PDF")
+                }} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar PDF</button>
                 <button onClick={()=>setPreview(null)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:16}}>X</button>
               </div>
             </div>
