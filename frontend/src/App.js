@@ -250,8 +250,9 @@ function App() {
           {/* <button onClick={printAll} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
             Imprimir {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button> */}
           <button onClick={async ()=>{
+                  if(!preview) return;
                   const res = await fetch(`${API}/generate-pdf`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderNo:selOrder,palletIds:[preview.id]})});
-                  if(res.ok){const blob=await res.blob();const link=document.createElement('a');link.href=window.URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));link.download=`etiqueta_${preview.internalPalletNo}.pdf`;document.body.appendChild(link);link.click();document.body.removeChild(link);window.URL.revokeObjectURL(link.href)}
+                  if(res.ok){const blob=await res.blob();const link=document.createElement('a');link.href=window.URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));link.download=`etiqueta_${preview.internalPalletNo}.pdf`;document.body.appendChild(link);link.click();document.body.removeChild(link)}
                   else alert("Error generando PDF")
                 }} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar PDF</button>
           <button onClick={sendEmail} style={{background:C.green,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
