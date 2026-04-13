@@ -119,21 +119,26 @@ function App() {
       </div></div></body></html>`;
   };
 
-  const downloadLabels = () => {
+  const downloadLabels = async () => {
     if (!data || !selOrder) return;
     const order = data.orders.find(o => o.orderNo === selOrder);
     if (!order) return;
-    const pp = selPallets.size > 0 ? order.pallets.filter(p => selPallets.has(p.id)) : order.pallets;
-    let html = `<!DOCTYPE html><html><head><style>@page{size:A4;margin:12mm}body{font-family:Arial,sans-serif;margin:0;color:#000}.lbl{border:2px solid #000;padding:16px;box-sizing:border-box;page-break-after:always}.lbl:last-child{page-break-after:auto}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:10px}.sec{border-bottom:1px solid #ccc;padding:8px 0}.st{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px}.row{display:flex;gap:16px;flex-wrap:wrap}.f{flex:1;min-width:100px}.fl{font-size:8px;color:#888;text-transform:uppercase}.fv{font-size:14px;font-weight:700;margin-top:1px}.big{font-size:20px}</style></head><body>`;
-    pp.forEach(p => { html += generateLabelHTML(p).replace(/<!DOCTYPE html>.*?<body>/s, '').replace('</body></html>',''); });
-    html += "</body></html>";
-    const blob = new Blob([html], {type: 'text/html'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `etiquetas_${selOrder}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const palletIds = selPallets.size > 0 ? Array.from(selPallets) : null;
+    try {
+      const res = await fetch(`${API}/generate-pdf`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ orderNo: selOrder, palletIds })
+      });
+      if (!res.ok) { alert("Error generando PDF"); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `etiquetas_${selOrder}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) { alert("Error: " + err.message); }
   };
 
   const sendEmail = async () => {
@@ -142,39 +147,18 @@ function App() {
     if (!order || !order.pallets.length) return;
     const email = order.pallets[0].locationEmail;
     if (!email) { alert("No hay email configurado para el almacen de este pedido"); return; }
-    if (!window.confirm(`Enviar etiquetas a: ${email}?`)) return;
-    const pp = selPallets.size > 0 ? order.pallets.filter(p => selPallets.has(p.id)) : order.pallets;
-    let html = `<html><head><style>body{font-family:Arial,sans-serif;color:#000}.lbl{border:2px solid #000;padding:16px;margin-bottom:20px}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:10px}.sec{border-bottom:1px solid #ccc;padding:8px 0}.st{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:1px;font-weight:bold;margin-bottom:4px}.fl{font-size:8px;color:#888;text-transform:uppercase}.fv{font-size:14px;font-weight:700}.big{font-size:20px}</style></head><body>`;
-    html += `<p>Adjunto las etiquetas de palet para el pedido <strong>${order.pallets[0].externalDocNo||selOrder}</strong>.</p>`;
-    pp.forEach(p => {
-      html += `<div class="lbl">
-        <div class="hdr"><div><strong style="font-size:18px">GLOBAL FOOD LINK S.L.</strong></div><div style="text-align:right"><strong style="font-size:16px">${p.externalDocNo||p.salesOrderNo}</strong></div></div>
-        <div class="sec"><div class="st">Customer</div><div><span class="fl">Name: </span><strong>${p.customerName}</strong> | <span class="fl">Country: </span><strong>${p.shipToCountry}</strong></div></div>
-        <div class="sec"><div class="st">Item</div><div><span class="fl">Code: </span><strong class="big">${p.itemRefNo||p.itemNo}</strong> | <span class="fl">Desc: </span>${p.itemDescription||""} | <span class="fl">EAN: </span>${p.eanCode||"--"}</div></div>
-        <div class="sec"><div class="st">Details</div>
-        <div><span class="fl">SSCC: </span><strong>${p.sscc||"--"}</strong> | <span class="fl">Batch: </span><strong class="big">${p.lotNo}</strong> | <span class="fl">Best Before: </span><strong class="big">${fmtDate(p.expirationDate)}</strong></div>
-        <div><span class="fl">Net Weight: </span><strong class="big">${p.initQuantity} Kg</strong> | <span class="fl">Boxes: </span><strong class="big">${p.boxesPerPallet}</strong></div></div>
-        <div style="border-top:2px solid #000;padding-top:8px;margin-top:8px"><div class="st">GS1-128</div>
-        ${p.gs1Line1?`<div><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line1)}&height=14" style="width:90%;height:60px"/><div style="font-family:monospace;font-size:9px">${p.gs1Line1HR}</div></div>`:""}
-        ${p.gs1Line2?`<div><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line2)}&height=14" style="width:90%;height:60px"/><div style="font-family:monospace;font-size:9px">${p.gs1Line2HR}</div></div>`:""}
-        <div style="border-top:2px solid #000;padding-top:6px;margin-top:6px"><img src="${window.location.origin}/api/barcode?data=${encodeURIComponent(p.gs1Line3)}&height=16" style="width:90%;height:70px"/><div style="font-family:monospace;font-size:11px;font-weight:bold">${p.gs1Line3HR}</div></div>
-        </div></div>`;
-    });
-    html += "</body></html>";
+    if (!window.confirm(`Enviar etiquetas PDF a: ${email}?`)) return;
+    const palletIds = selPallets.size > 0 ? Array.from(selPallets) : null;
     try {
       const res = await fetch(`${API}/send-email`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          to: email,
-          subject: `Etiquetas Palet - ${order.pallets[0].externalDocNo||selOrder} - ${order.customerName}`,
-          html: html
-        })
+        body: JSON.stringify({ orderNo: selOrder, palletIds })
       });
       const result = await res.json();
-      if (res.ok) { alert(`Email enviado a ${email}`); }
+      if (res.ok) { alert(`PDF enviado a ${email}`); }
       else { alert(`Error: ${result.detail}`); }
-    } catch (err) { alert(`Error de conexion: ${err.message}`); }
+    } catch (err) { alert("Error: " + err.message); }
   };
 
   // ── LOADING ──
@@ -268,8 +252,11 @@ function App() {
             {selPallets.size===order.pallets.length?"Deseleccionar":"Seleccionar todo"}</button>
           {/* <button onClick={printAll} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
             Imprimir {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button> */}
-          <button onClick={downloadLabels} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
-            Descargar {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button>
+          <button onClick={async ()=>{
+                  const res = await fetch(`${API}/generate-pdf`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderNo:selOrder,palletIds:[preview.id]})});
+                  if(res.ok){const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`etiqueta_${preview.internalPalletNo}.pdf`;a.click();URL.revokeObjectURL(url)}
+                  else alert("Error generando PDF")
+                }} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar PDF</button>
           <button onClick={sendEmail} style={{background:C.green,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
             Enviar email</button>
         </div>
