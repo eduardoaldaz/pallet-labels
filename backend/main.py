@@ -81,21 +81,24 @@ def generate_pdf(pallets):
         x0 = 10
         y = 10
         
-        # Header: Company + Supplier's PO + Customer's PO - COMPACT
+        # Header: Company left, POs right-aligned
         pdf.set_font('Helvetica', 'B', 14)
         pdf.set_xy(x0, y)
-        pdf.cell(pw * 0.35, 7, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
+        pdf.cell(pw * 0.5, 10, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
+        
+        # Supplier's PO and Customer's PO on the right
+        right_x = x0 + pw * 0.5
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
-        pdf.set_xy(x0 + pw * 0.35, y)
-        pdf.cell(pw * 0.15, 3, "SUPPLIER'S PO", 0, 0, 'R')
-        pdf.cell(pw * 0.15, 3, "CUSTOMER'S PO", 0, 1, 'R')
+        pdf.set_xy(right_x, y)
+        pdf.cell(pw * 0.25, 3, "SUPPLIER'S PO", 0, 0, 'L')
+        pdf.cell(pw * 0.25, 3, "CUSTOMER'S PO", 0, 1, 'L')
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 14)
-        pdf.set_xy(x0 + pw * 0.35, y + 3)
-        pdf.cell(pw * 0.15, 7, str(p.get('salesOrderNo', '')), 0, 0, 'R')
-        pdf.cell(pw * 0.15, 7, str(p.get('externalDocNo') or ''), 0, 0, 'R')
+        pdf.set_xy(right_x, y + 3)
+        pdf.cell(pw * 0.25, 7, str(p.get('salesOrderNo', '')), 0, 0, 'L')
+        pdf.cell(pw * 0.25, 7, str(p.get('externalDocNo') or ''), 0, 0, 'L')
         y += 12
         pdf.set_draw_color(0, 0, 0)
         pdf.line(x0, y, x0 + pw, y)
@@ -152,13 +155,13 @@ def generate_pdf(pallets):
         pdf.line(x0, y, x0 + pw, y)
         y += 1
         
-        # Row 1: Supplier's Code + Description + ETIN/EAN
+        # Row 1: Supplier's Code + Description + ETIN/EAN (aligned with NET WEIGHT)
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
         pdf.set_xy(x0, y)
         pdf.cell(pw * 0.15, 3, "SUPPLIER'S CODE", 0, 0)
-        pdf.cell(pw * 0.5, 3, 'DESCRIPTION', 0, 0)
-        pdf.cell(pw * 0.35, 3, 'ETIN/EAN', 0, 1)
+        pdf.cell(pw * 0.53, 3, 'DESCRIPTION', 0, 0)
+        pdf.cell(pw * 0.32, 3, 'ETIN/EAN', 0, 1)
         y += 3
         
         pdf.set_text_color(0, 0, 0)
@@ -166,10 +169,10 @@ def generate_pdf(pallets):
         pdf.set_xy(x0, y)
         pdf.cell(pw * 0.15, 7, str(p.get('itemNo', '')), 0, 0)
         pdf.set_font('Helvetica', 'B', 10)
-        desc = str(p.get('itemDescription', ''))[:42]
-        pdf.cell(pw * 0.5, 7, desc, 0, 0)
+        desc = str(p.get('itemDescription', ''))[:45]
+        pdf.cell(pw * 0.53, 7, desc, 0, 0)
         pdf.set_font('Helvetica', 'B', 10)
-        pdf.cell(pw * 0.35, 7, str(p.get('eanCode', '')), 0, 1)
+        pdf.cell(pw * 0.32, 7, str(p.get('eanCode', '')), 0, 1)
         y += 8
         
         # Row 2: Customer's code
