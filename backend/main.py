@@ -81,24 +81,25 @@ def generate_pdf(pallets):
         x0 = 10
         y = 10
         
-        # Header: Company left, POs right-aligned
+        # Header: Company left, POs far right
         pdf.set_font('Helvetica', 'B', 14)
         pdf.set_xy(x0, y)
-        pdf.cell(pw * 0.5, 10, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
+        pdf.cell(pw * 0.4, 10, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
         
-        # Supplier's PO and Customer's PO on the right
-        right_x = x0 + pw * 0.5
+        # POs right-aligned at the far right
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
-        pdf.set_xy(right_x, y)
-        pdf.cell(pw * 0.25, 3, "SUPPLIER'S PO", 0, 0, 'L')
-        pdf.cell(pw * 0.25, 3, "CUSTOMER'S PO", 0, 1, 'L')
+        pdf.set_xy(x0 + pw * 0.6, y)
+        pdf.cell(pw * 0.2, 3, "SUPPLIER'S PO", 0, 0, 'R')
+        pdf.cell(pw * 0.04, 3, '', 0, 0)
+        pdf.cell(pw * 0.16, 3, "CUSTOMER'S PO", 0, 1, 'R')
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 14)
-        pdf.set_xy(right_x, y + 3)
-        pdf.cell(pw * 0.25, 7, str(p.get('salesOrderNo', '')), 0, 0, 'L')
-        pdf.cell(pw * 0.25, 7, str(p.get('externalDocNo') or ''), 0, 0, 'L')
+        pdf.set_xy(x0 + pw * 0.6, y + 3)
+        pdf.cell(pw * 0.2, 7, str(p.get('salesOrderNo', '')), 0, 0, 'R')
+        pdf.cell(pw * 0.04, 7, '', 0, 0)
+        pdf.cell(pw * 0.16, 7, str(p.get('externalDocNo') or ''), 0, 0, 'R')
         y += 12
         pdf.set_draw_color(0, 0, 0)
         pdf.line(x0, y, x0 + pw, y)
