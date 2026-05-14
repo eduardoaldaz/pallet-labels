@@ -330,14 +330,14 @@ def get_enriched_pallets(sales_order_no=None):
         weight_3102 = str(int(round(init_qty * 100))).zfill(6)
         
         # Line 1: (02) GTIN + (15) Best Before + (17) Expiry + (10) Batch
-        gs1_line1 = f"02{gtin14}15{exp_gs1}17{exp_gs1}10{lot_no}" if gtin14 else ""
+        gs1_line1 = f"02{gtin14}15{exp_gs1}10{lot_no}" if gtin14 else ""
         # Line 2: (37) Quantity + (3102) Net Weight
         gs1_line2 = f"37{boxes}3102{weight_3102}" if boxes else ""
         # Line 3: (00) SSCC
         gs1_line3 = f"00{sscc}"
         
         # Human-readable format for labels
-        gs1_line1_hr = f"(02) {gtin14} (15) {exp_gs1} (17) {exp_gs1} (10) {lot_no}" if gtin14 else ""
+        gs1_line1_hr = f"(02) {gtin14} (15) {exp_gs1} (10) {lot_no}" if gtin14 else ""
         gs1_line2_hr = f"(37) {boxes} (3102) {weight_3102}" if boxes else ""
         gs1_line3_hr = f"(00) {sscc}"
         
@@ -360,6 +360,9 @@ def get_enriched_pallets(sales_order_no=None):
             "customerNo": o.get("Sell_to_Customer_No", "") or p.get("Customer_No", ""),
             "customerName": o.get("Sell_to_Customer_Name", ""),
             "shipToCountry": o.get("Ship_to_Country_Region_Code", ""),
+            "shipToAddress": o.get("Ship_to_Address", ""),
+            "shipToPostCode": o.get("Ship_to_Post_Code", ""),
+            "shipToCity": o.get("Ship_to_City", ""),
             "orderDate": o.get("Order_Date", ""),
             "shipmentDate": o.get("Shipment_Date", ""),
             "externalDocNo": o.get("External_Document_No", ""),

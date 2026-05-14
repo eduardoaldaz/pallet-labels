@@ -77,7 +77,7 @@ def generate_pdf(pallets):
     
     for p in pallets:
         pdf.add_page()
-        pw = 190  # page width usable
+        pw = 190
         x0 = 10
         y = 10
         
@@ -85,9 +85,23 @@ def generate_pdf(pallets):
         pdf.set_font('Helvetica', 'B', 16)
         pdf.set_xy(x0, y)
         pdf.cell(pw/2, 8, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
+        pdf.ln()
+        y += 9
+        
+        # Supplier's PO and Customer's PO
+        pdf.set_font('Helvetica', '', 7)
+        pdf.set_text_color(130, 130, 130)
+        pdf.set_xy(x0, y)
+        pdf.cell(pw/2, 3, "SUPPLIER'S PO", 0, 0, 'L')
+        pdf.cell(pw/2, 3, "CUSTOMER'S PO", 0, 1, 'R')
+        y += 3
+        
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 14)
-        pdf.cell(pw/2, 8, str(p.get('externalDocNo') or p.get('salesOrderNo', '')), 0, 1, 'R')
-        y += 10
+        pdf.set_xy(x0, y)
+        pdf.cell(pw/2, 7, str(p.get('salesOrderNo', '')), 0, 0, 'L')
+        pdf.cell(pw/2, 7, str(p.get('externalDocNo') or ''), 0, 1, 'R')
+        y += 9
         pdf.set_draw_color(0, 0, 0)
         pdf.line(x0, y, x0 + pw, y)
         y += 2
@@ -104,16 +118,25 @@ def generate_pdf(pallets):
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
         pdf.set_xy(x0, y)
-        pdf.cell(pw * 0.65, 3, 'NAME', 0, 0)
-        pdf.cell(pw * 0.35, 3, 'COUNTRY', 0, 1)
+        pdf.cell(pw * 0.5, 3, 'NAME', 0, 0)
+        pdf.cell(pw * 0.5, 3, 'DELIVERY ADDRESS', 0, 1)
         y += 3
         
         pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Helvetica', 'B', 12)
+        pdf.set_font('Helvetica', 'B', 14)
         pdf.set_xy(x0, y)
-        pdf.cell(pw * 0.65, 7, str(p.get('customerName', '')), 0, 0)
-        pdf.set_font('Helvetica', 'B', 18)
-        pdf.cell(pw * 0.35, 7, str(p.get('shipToCountry', '')), 0, 1)
+        pdf.cell(pw * 0.5, 7, str(p.get('customerName', '')), 0, 0)
+        
+        # Delivery Address concatenated
+        addr_parts = [
+            str(p.get('shipToAddress', '')),
+            str(p.get('shipToPostCode', '')),
+            str(p.get('shipToCity', '')),
+            str(p.get('shipToCountry', ''))
+        ]
+        delivery_addr = ', '.join([x for x in addr_parts if x])
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.cell(pw * 0.5, 7, delivery_addr[:60], 0, 1)
         y += 9
         pdf.set_draw_color(200, 200, 200)
         pdf.line(x0, y, x0 + pw, y)
@@ -127,27 +150,37 @@ def generate_pdf(pallets):
         pdf.line(x0, y, x0 + pw, y)
         y += 1
         
-        col1 = pw * 0.2
-        col2 = pw * 0.5
-        col3 = pw * 0.3
-        
+        # Row 1: Supplier's Code + Description
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
         pdf.set_xy(x0, y)
-        pdf.cell(col1, 3, 'CODE', 0, 0)
-        pdf.cell(col2, 3, 'DESCRIPTION', 0, 0)
-        pdf.cell(col3, 3, 'ETIN/EAN', 0, 1)
+        pdf.cell(pw * 0.2, 3, "SUPPLIER'S CODE", 0, 0)
+        pdf.cell(pw * 0.5, 3, 'DESCRIPTION', 0, 0)
+        pdf.cell(pw * 0.3, 3, 'ETIN/EAN', 0, 1)
         y += 3
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 16)
         pdf.set_xy(x0, y)
-        pdf.cell(col1, 7, str(p.get('itemRefNo') or p.get('itemNo', '')), 0, 0)
-        pdf.set_font('Helvetica', 'B', 11)
-        desc = str(p.get('itemDescription', ''))[:45]
-        pdf.cell(col2, 7, desc, 0, 0)
+        pdf.cell(pw * 0.2, 7, str(p.get('itemNo', '')), 0, 0)
         pdf.set_font('Helvetica', 'B', 10)
-        pdf.cell(col3, 7, str(p.get('eanCode', '')), 0, 1)
+        desc = str(p.get('itemDescription', ''))[:45]
+        pdf.cell(pw * 0.5, 7, desc, 0, 0)
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.cell(pw * 0.3, 7, str(p.get('eanCode', '')), 0, 1)
+        y += 8
+        
+        # Row 2: Customer's code
+        pdf.set_font('Helvetica', '', 7)
+        pdf.set_text_color(130, 130, 130)
+        pdf.set_xy(x0, y)
+        pdf.cell(pw * 0.2, 3, "CUSTOMER'S CODE", 0, 1)
+        y += 3
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Helvetica', 'B', 14)
+        pdf.set_xy(x0, y)
+        pdf.cell(pw * 0.5, 7, str(p.get('itemRefNo', '')), 0, 1)
         y += 9
         pdf.set_draw_color(200, 200, 200)
         pdf.line(x0, y, x0 + pw, y)
@@ -210,7 +243,6 @@ def generate_pdf(pallets):
         bh2 = 18
         bh3 = 22
         
-        # Line 1
         gs1_1 = p.get('gs1Line1', '')
         if gs1_1:
             tmp1 = save_barcode_temp(gs1_1, height=12)
@@ -222,7 +254,6 @@ def generate_pdf(pallets):
             pdf.cell(pw, 4, str(p.get('gs1Line1HR', '')), 0, 1, 'C')
             y += 6
         
-        # Line 2
         gs1_2 = p.get('gs1Line2', '')
         if gs1_2:
             tmp2 = save_barcode_temp(gs1_2, height=12)
@@ -234,7 +265,6 @@ def generate_pdf(pallets):
             pdf.cell(pw, 4, str(p.get('gs1Line2HR', '')), 0, 1, 'C')
             y += 6
         
-        # Line 3 - SSCC
         pdf.set_draw_color(0, 0, 0)
         pdf.line(x0, y, x0 + pw, y)
         y += 2
