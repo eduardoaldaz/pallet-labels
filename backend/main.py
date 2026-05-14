@@ -94,8 +94,8 @@ def generate_pdf(pallets):
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 14)
         pdf.set_xy(x0 + pw * 0.35, y + 3)
-        pdf.cell(pw * 0.15, 7, str(p.get('salesOrderNo', '')), 0, 0, 'L')
-        pdf.cell(pw * 0.15, 7, str(p.get('externalDocNo') or ''), 0, 0, 'L')
+        pdf.cell(pw * 0.15, 7, str(p.get('salesOrderNo', '')), 0, 0, 'R')
+        pdf.cell(pw * 0.15, 7, str(p.get('externalDocNo') or ''), 0, 0, 'R')
         y += 12
         pdf.set_draw_color(0, 0, 0)
         pdf.line(x0, y, x0 + pw, y)
