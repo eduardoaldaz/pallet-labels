@@ -88,8 +88,8 @@ def generate_pdf(pallets):
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
         pdf.set_xy(x0 + pw * 0.35, y)
-        pdf.cell(pw * 0.15, 3, "SUPPLIER'S PO", 0, 0, 'L')
-        pdf.cell(pw * 0.15, 3, "CUSTOMER'S PO", 0, 1, 'L')
+        pdf.cell(pw * 0.15, 3, "SUPPLIER'S PO", 0, 0, 'R')
+        pdf.cell(pw * 0.15, 3, "CUSTOMER'S PO", 0, 1, 'R')
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 14)
