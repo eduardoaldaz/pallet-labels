@@ -81,21 +81,21 @@ def generate_pdf(pallets):
         x0 = 10
         y = 10
         
-        # Header: Company + Supplier's PO + Customer's PO - ALL ON ONE LINE
+        # Header: Company + Supplier's PO + Customer's PO - COMPACT
         pdf.set_font('Helvetica', 'B', 14)
         pdf.set_xy(x0, y)
-        pdf.cell(pw * 0.4, 7, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
+        pdf.cell(pw * 0.35, 7, 'GLOBAL FOOD LINK S.L.', 0, 0, 'L')
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
+        pdf.set_xy(x0 + pw * 0.35, y)
         pdf.cell(pw * 0.15, 3, "SUPPLIER'S PO", 0, 0, 'L')
-        pdf.cell(pw * 0.15, 3, '', 0, 0)
-        pdf.cell(pw * 0.3, 3, "CUSTOMER'S PO", 0, 1, 'R')
+        pdf.cell(pw * 0.15, 3, "CUSTOMER'S PO", 0, 1, 'L')
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 14)
-        pdf.set_xy(x0 + pw * 0.4, y + 3)
-        pdf.cell(pw * 0.3, 7, str(p.get('salesOrderNo', '')), 0, 0, 'L')
-        pdf.cell(pw * 0.3, 7, str(p.get('externalDocNo') or ''), 0, 0, 'R')
+        pdf.set_xy(x0 + pw * 0.35, y + 3)
+        pdf.cell(pw * 0.15, 7, str(p.get('salesOrderNo', '')), 0, 0, 'L')
+        pdf.cell(pw * 0.15, 7, str(p.get('externalDocNo') or ''), 0, 0, 'L')
         y += 12
         pdf.set_draw_color(0, 0, 0)
         pdf.line(x0, y, x0 + pw, y)
@@ -187,7 +187,7 @@ def generate_pdf(pallets):
         pdf.line(x0, y, x0 + pw, y)
         y += 2
         
-        # DETAILS - ALL VALUES SAME SIZE (12pt)
+        # DETAILS - ALL ON TWO COMPACT LINES
         pdf.set_font('Helvetica', 'B', 9)
         pdf.set_xy(x0, y)
         pdf.cell(pw, 5, 'DETAILS', 0, 1)
@@ -195,35 +195,31 @@ def generate_pdf(pallets):
         pdf.line(x0, y, x0 + pw, y)
         y += 1
         
-        dc = pw / 3
+        # Row 1: SSCC + BATCH + BEST BEFORE + NET WEIGHT + BOXES
+        c1 = pw * 0.32
+        c2 = pw * 0.17
+        c3 = pw * 0.19
+        c4 = pw * 0.16
+        c5 = pw * 0.16
+        
         pdf.set_font('Helvetica', '', 7)
         pdf.set_text_color(130, 130, 130)
         pdf.set_xy(x0, y)
-        pdf.cell(dc, 3, 'SSCC', 0, 0)
-        pdf.cell(dc, 3, 'BATCH', 0, 0)
-        pdf.cell(dc, 3, 'BEST BEFORE', 0, 1)
+        pdf.cell(c1, 3, 'SSCC', 0, 0)
+        pdf.cell(c2, 3, 'BATCH', 0, 0)
+        pdf.cell(c3, 3, 'BEST BEFORE', 0, 0)
+        pdf.cell(c4, 3, 'NET WEIGHT', 0, 0)
+        pdf.cell(c5, 3, 'BOXES', 0, 1)
         y += 3
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font('Helvetica', 'B', 12)
         pdf.set_xy(x0, y)
-        pdf.cell(dc, 7, str(p.get('sscc', '--')), 0, 0)
-        pdf.cell(dc, 7, str(p.get('lotNo', '')), 0, 0)
-        pdf.cell(dc, 7, fmt_date(p.get('expirationDate')), 0, 1)
-        y += 8
-        
-        pdf.set_font('Helvetica', '', 7)
-        pdf.set_text_color(130, 130, 130)
-        pdf.set_xy(x0, y)
-        pdf.cell(dc, 3, 'NET WEIGHT', 0, 0)
-        pdf.cell(dc, 3, 'BOXES', 0, 1)
-        y += 3
-        
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Helvetica', 'B', 12)
-        pdf.set_xy(x0, y)
-        pdf.cell(dc, 7, f"{p.get('initQuantity', 0)} Kg", 0, 0)
-        pdf.cell(dc, 7, str(p.get('boxesPerPallet', 0)), 0, 1)
+        pdf.cell(c1, 7, str(p.get('sscc', '--')), 0, 0)
+        pdf.cell(c2, 7, str(p.get('lotNo', '')), 0, 0)
+        pdf.cell(c3, 7, fmt_date(p.get('expirationDate')), 0, 0)
+        pdf.cell(c4, 7, f"{p.get('initQuantity', 0)} Kg", 0, 0)
+        pdf.cell(c5, 7, str(p.get('boxesPerPallet', 0)), 0, 1)
         y += 9
         
         pdf.set_draw_color(0, 0, 0)
