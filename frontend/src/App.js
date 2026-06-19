@@ -49,8 +49,24 @@ function App() {
   const [preview, setPreview] = useState(null);
   const [search, setSearch] = useState("");
   const [selPallets, setSelPallets] = useState(new Set());
-  const [sortBy, setSortBy] = useState('orderNo');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortBy, setSortBy] = useState('shipmentDate');
+  const [sortDirection, setSortDirection] = useState('desc');
+
+  useEffect(() => {
+  if (!selOrder || !data) {
+    // Si no hay pedido seleccionado o no hay datos, título genérico
+    document.title = 'Etiquetas Palet - Global Food Link';
+    return;
+  }
+
+  // Buscar el pedido seleccionado
+  const order = data.orders.find(o => o.orderNo === selOrder);
+  if (order) {
+    document.title = `Etiqueta de palet - ${order.orderNo} - ${order.customerName}`;
+	} else {
+    document.title = 'Etiquetas Palet - Global Food Link';
+	}
+  }, [selOrder, data]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
