@@ -1,20 +1,47 @@
 import React, { useState, useEffect, useCallback } from "react";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Chip,
+  Stack,
+  Drawer,
+  Checkbox,
+  Tooltip,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import {
+  Refresh as RefreshIcon,
+  ArrowBack as ArrowBackIcon,
+  PictureAsPdf as PdfIcon,
+  Email as EmailIcon,
+  Print as PrintIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 
+// ----- CONSTANTES Y FUNCIONES AUXILIARES (se mantienen igual) -----
 const API = "/api";
-const C = {
-  bg: "#0f172a", card: "#1e293b", border: "#334155", accent: "#3b82f6",
-  text: "#e2e8f0", muted: "#94a3b8", dim: "#64748b", white: "#fff",
-  green: "#10b981", amber: "#f59e0b", red: "#ef4444",
-};
-
 const fmtDate = (v) => {
   if (!v) return "\u2014";
   if (typeof v === "string" && v.includes("T")) return new Date(v).toLocaleDateString("es-ES");
   if (typeof v === "number") return new Date((v - 25569) * 86400000).toLocaleDateString("es-ES");
   return String(v);
 };
+// ----- FIN AUXILIARES -----
 
 function App() {
+  // ----- TODOS LOS ESTADOS Y FUNCIONES SE MANTIENEN IGUAL -----
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,6 +49,8 @@ function App() {
   const [preview, setPreview] = useState(null);
   const [search, setSearch] = useState("");
   const [selPallets, setSelPallets] = useState(new Set());
+  const [sortBy, setSortBy] = useState('orderNo');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -160,220 +189,306 @@ function App() {
       else { alert(`Error: ${result.detail}`); }
     } catch (err) { alert("Error: " + err.message); }
   };
+  // ----- FIN DE FUNCIONES (NO TOCAR) -----
 
-  // ── LOADING ──
+  // Función de ordenación
+  const handleSort = (field) => {
+    const isAsc = sortBy === field && sortDirection === 'asc';
+    setSortDirection(isAsc ? 'desc' : 'asc');
+    setSortBy(field);
+  };
+
+  // Función para obtener los pedidos filtrados y ordenados
+  const getSortedOrders = () => {
+    let list = data.orders.filter(o =>
+      !search || o.orderNo.toLowerCase().includes(search.toLowerCase()) || o.customerName.toLowerCase().includes(search.toLowerCase())
+    );
+    if (sortBy) {
+      list.sort((a, b) => {
+        const aVal = a[sortBy] || '';
+        const bVal = b[sortBy] || '';
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return list;
+  };
+
+  // ----- RENDERIZADO: LOADING -----
   if (loading) return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-      <div style={{textAlign:"center"}}>
-        <div style={{fontSize:48,marginBottom:12}}>📦</div>
-        <div style={{color:C.white,fontSize:18,fontWeight:600}}>Cargando datos de Business Central...</div>
-        <div style={{color:C.muted,fontSize:13,marginTop:8}}>Conectando con OData</div>
-      </div>
-    </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', bgcolor: '#ffffff' }}>
+      <CircularProgress sx={{ color: '#00B7C3' }} />
+      <Typography variant="h6" sx={{ mt: 2, color: '#212121' }}></Typography>
+      <Typography variant="body2" color="textSecondary">Getting ready...</Typography>
+    </Box>
   );
 
-  // ── ERROR ──
+  // ----- RENDERIZADO: ERROR -----
   if (error) return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-      <div style={{textAlign:"center",maxWidth:400}}>
-        <div style={{fontSize:48,marginBottom:12}}>⚠️</div>
-        <div style={{color:C.red,fontSize:18,fontWeight:600,marginBottom:8}}>Error de conexion</div>
-        <div style={{color:C.muted,fontSize:13,marginBottom:20}}>{error}</div>
-        <button onClick={loadData} style={{background:C.accent,border:"none",color:"#fff",padding:"10px 24px",borderRadius:8,cursor:"pointer",fontSize:14}}>Reintentar</button>
-      </div>
-    </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', bgcolor: '#ffffff', p: 3 }}>
+      <Alert severity="error" sx={{ mb: 2 }}>Error de conexión</Alert>
+      <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>
+      <Button variant="contained" color="primary" onClick={loadData}>Reintentar</Button>
+    </Box>
   );
 
   if (!data) return null;
 
-  // ── ORDERS ──
+  // ----- VISTA: LISTA DE PEDIDOS (cuando no hay pedido seleccionado) -----
   if (!selOrder) {
-    const list = data.orders.filter(o =>
-      !search || o.orderNo.toLowerCase().includes(search.toLowerCase()) || o.customerName.toLowerCase().includes(search.toLowerCase())
-    );
+    const list = getSortedOrders();
+
     return (
-      <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-        <div style={{background:C.card,borderBottom:`1px solid ${C.border}`,padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:22}}>📦</span>
-            <div><h1 style={{color:C.white,fontSize:16,fontWeight:700,margin:0}}>Etiquetas Palet</h1>
-            <p style={{color:C.muted,fontSize:11,margin:0}}>Pedidos de venta abiertos - Datos en tiempo real de BC</p></div>
-          </div>
-          <div style={{display:"flex",gap:10,alignItems:"center"}}>
-            <span style={{background:"rgba(59,130,246,0.12)",padding:"4px 10px",borderRadius:6,color:C.accent,fontSize:12,fontWeight:600}}>{data.totalOrders} pedidos</span>
-            <span style={{background:"rgba(16,185,129,0.12)",padding:"4px 10px",borderRadius:6,color:C.green,fontSize:12,fontWeight:600}}>{data.totalPallets} pallets</span>
-            <button onClick={refresh} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,padding:"4px 10px",borderRadius:6,cursor:"pointer",fontSize:11}}>🔄 Actualizar</button>
-          </div>
-        </div>
-        <div style={{padding:"12px 20px"}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar pedido o cliente..."
-            style={{width:"100%",padding:"10px 14px",background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.white,fontSize:13,outline:"none",boxSizing:"border-box"}} />
-        </div>
-        <div style={{padding:"0 20px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:10}}>
-          {list.map(o=>(
-            <div key={o.orderNo} onClick={async ()=>{setSelOrder(o.orderNo);setSelPallets(new Set());setPreview(null);const res = await fetch(`${API}/orders/${o.orderNo}`);const orderData = await res.json();setData(prev => ({...prev, orders: prev.orders.map(x => x.orderNo === o.orderNo ? orderData : x)}));}}
-              style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:14,cursor:"pointer"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                <span style={{color:C.accent,fontSize:16,fontWeight:700}}>{o.orderNo}</span>
-                <span style={{background:"rgba(59,130,246,0.12)",color:C.accent,padding:"2px 8px",borderRadius:5,fontSize:11,fontWeight:600}}>{o.palletCount || o.pallets.length} pallets</span>
-              </div>
-              <div style={{color:C.white,fontSize:13,fontWeight:500,marginBottom:4}}>{o.customerName}</div>
-              <div style={{display:"flex",gap:14,color:C.muted,fontSize:11}}>
-                <span>{o.shipToCountry||"--"}</span><span>{fmtDate(o.shipmentDate)}</span><span>{o.itemCount} art.</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f3f2f1' }}>
+        {/* Header con color primario (turquesa) */}
+		<Paper elevation={0} sx={{ p: 2, bgcolor: '#2c2c2c', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 0 }}>          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>Etiquetas de Palet</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>Pedidos de venta abiertos - Datos en tiempo real de BC</Typography>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Chip label={`${data.totalOrders} pedidos`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
+            <Chip label={`${data.totalPallets} pallets`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
+            <IconButton size="small" sx={{ color: 'white' }} onClick={refresh}><RefreshIcon /></IconButton>
+          </Stack>
+        </Paper>
+
+        {/* Barra de búsqueda */}
+        <Box sx={{ p: 2, bgcolor: 'white', borderBottom: '1px solid #e0e0e0' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Buscar pedido o cliente..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            size="small"
+            sx={{ bgcolor: '#faf9f8' }}
+          />
+        </Box>
+
+        {/* Tabla de pedidos con ordenación */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          <TableContainer component={Paper} sx={{ borderRadius: 0 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortBy === 'orderNo'}
+                      direction={sortBy === 'orderNo' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('orderNo')}
+                    >
+                      Nº Pedido
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortBy === 'customerName'}
+                      direction={sortBy === 'customerName' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('customerName')}
+                    >
+                      Cliente
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortBy === 'shipToCountry'}
+                      direction={sortBy === 'shipToCountry' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('shipToCountry')}
+                    >
+                      País
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortBy === 'shipmentDate'}
+                      direction={sortBy === 'shipmentDate' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('shipmentDate')}
+                    >
+                      Fecha
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortBy === 'itemCount'}
+                      direction={sortBy === 'itemCount' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('itemCount')}
+                    >
+                      Artículos
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel
+                      active={sortBy === 'palletCount'}
+                      direction={sortBy === 'palletCount' ? sortDirection : 'asc'}
+                      onClick={() => handleSort('palletCount')}
+                    >
+                      Pallets
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right">Acción</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {list.map((o) => (
+                  <TableRow
+                    key={o.orderNo}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={async () => {
+                      setSelOrder(o.orderNo);
+                      setSelPallets(new Set());
+                      setPreview(null);
+                      const res = await fetch(`${API}/orders/${o.orderNo}`);
+                      const orderData = await res.json();
+                      setData(prev => ({ ...prev, orders: prev.orders.map(x => x.orderNo === o.orderNo ? orderData : x) }));
+                    }}
+                  >
+                    <TableCell><Typography color="primary">{o.orderNo}</Typography></TableCell>
+                    <TableCell>{o.customerName}</TableCell>
+                    <TableCell>{o.shipToCountry || '--'}</TableCell>
+                    <TableCell>{fmtDate(o.shipmentDate)}</TableCell>
+                    <TableCell>{o.itemCount || '--'}</TableCell>
+                    <TableCell><Chip label={`${o.palletCount || o.pallets.length}`} size="small" color="primary" /></TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Ver pedido">
+                        <IconButton size="small" color="primary"><VisibilityIcon fontSize="small" /></IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      </Box>
     );
   }
 
-  // ── PALLETS ──
-  const order = data.orders.find(o => o.orderNo === selOrder);
-  if (!order) return null;
+  // ----- VISTA: DETALLE DE PEDIDO (cuando selOrder está definido) -----
+  const selectedOrder = data.orders.find(o => o.orderNo === selOrder);
+  if (!selectedOrder) return null;
+
   const items = {};
-  order.pallets.forEach(p => {
+  selectedOrder.pallets.forEach(p => {
     if (!items[p.itemNo]) items[p.itemNo] = { info: p, list: [] };
     items[p.itemNo].list.push(p);
   });
-  const toggleSel = id => setSelPallets(prev => { const n = new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
-  const toggleAll = () => { const all = order.pallets.map(p=>p.id); setSelPallets(prev=>prev.size===all.length?new Set():new Set(all)); };
+  const toggleSel = id => setSelPallets(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = () => { const all = selectedOrder.pallets.map(p => p.id); setSelPallets(prev => prev.size === all.length ? new Set() : new Set(all)); };
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-      <div style={{background:C.card,borderBottom:`1px solid ${C.border}`,padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={()=>{setSelOrder(null);setPreview(null)}} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,padding:"4px 10px",borderRadius:6,cursor:"pointer",fontSize:16}}>&larr;</button>
-          <div><h1 style={{color:C.accent,fontSize:16,fontWeight:700,margin:0}}>{order.orderNo}</h1><p style={{color:C.muted,fontSize:11,margin:0}}>{order.customerName}</p></div>
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          <button onClick={toggleAll} style={{background:"none",border:`1px solid ${C.border}`,color:C.text,padding:"6px 12px",borderRadius:6,cursor:"pointer",fontSize:11}}>
-            {selPallets.size===order.pallets.length?"Deseleccionar":"Seleccionar todo"}</button>
-          {/* <button onClick={printAll} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
-            Imprimir {selPallets.size>0?`(${selPallets.size})`:`todos (${order.pallets.length})`}</button> */}
-          <button onClick={downloadLabels} style={{background:C.accent,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
-            Descargar PDF</button>
-          <button onClick={sendEmail} style={{background:C.green,border:"none",color:"#fff",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>
-            Enviar email</button>
-        </div>
-      </div>
-      <div style={{display:"flex",height:"calc(100vh - 53px)"}}>
-        <div style={{flex:1,overflowY:"auto",padding:16}}>
-          <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-            {[{l:"Pallets",v:order.pallets.length,c:C.accent},{l:"Articulos",v:Object.keys(items).length,c:C.green},{l:"Pais",v:order.shipToCountry||"--",c:C.amber},{l:"Envio",v:fmtDate(order.shipmentDate),c:C.muted}].map((s,i)=>(
-              <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 14px",flex:1,minWidth:80}}>
-                <div style={{color:C.muted,fontSize:9,textTransform:"uppercase"}}>{s.l}</div>
-                <div style={{color:s.c,fontSize:18,fontWeight:700}}>{s.v}</div>
-              </div>
-            ))}
-          </div>
-          {Object.entries(items).map(([no,g])=>(
-            <div key={no} style={{marginBottom:14}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,padding:"6px 10px",background:C.card,borderRadius:6,border:`1px solid ${C.border}`}}>
-                <span style={{color:C.accent,fontWeight:700,fontSize:14}}>{no}</span>
-                <span style={{color:C.text,fontSize:12}}>{g.info.itemDescription}</span>
-                <span style={{color:C.muted,fontSize:11,marginLeft:"auto"}}>{g.list.length} pallets</span>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:6,paddingLeft:6}}>
-                {g.list.map(p=>{
-                  const sel=selPallets.has(p.id); const prev=preview?.id===p.id;
-                  return (
-                    <div key={p.id} onClick={()=>setPreview(p)} style={{background:prev?C.card:"rgba(30,41,59,0.6)",border:`1px solid ${prev?C.accent:sel?C.green:C.border}`,borderRadius:8,padding:10,cursor:"pointer",display:"flex",gap:8}}>
-                      <div onClick={e=>{e.stopPropagation();toggleSel(p.id)}} style={{width:18,height:18,borderRadius:3,border:`2px solid ${sel?C.green:C.dim}`,background:sel?C.green:"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,marginTop:1}}>
-                        {sel&&<span style={{color:"#fff",fontSize:10,fontWeight:700}}>&#10003;</span>}
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                          <span style={{color:C.white,fontWeight:600,fontSize:13}}>{p.internalPalletNo}</span>
-                          <span style={{color:C.amber,fontSize:11,fontWeight:600}}>{p.initQuantity} Kg</span>
-                        </div>
-                        <div style={{display:"flex",gap:10,fontSize:10,color:C.muted}}>
-                          <span>Lote: {p.lotNo}</span><span>Cad: {fmtDate(p.expirationDate)}</span>
-                          <span style={{color:C.green,fontWeight:600}}>{p.boxesPerPallet} cajas</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f3f2f1' }}>
+      {/* Header detalle */}
+		<Paper elevation={0} sx={{ p: 2, bgcolor: '#2c2c2c', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 0 }}>        <Stack direction="row" spacing={2} alignItems="center">
+          <IconButton sx={{ color: 'white' }} onClick={() => { setSelOrder(null); setPreview(null); }}><ArrowBackIcon /></IconButton>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>{selectedOrder.orderNo}</Typography>
+          <Typography variant="body2" sx={{ opacity: 0.8 }}>{selectedOrder.customerName}</Typography>
+        </Stack>
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" size="small" onClick={toggleAll} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}>
+            {selPallets.size === selectedOrder.pallets.length ? 'Deseleccionar' : 'Seleccionar todo'}
+          </Button>
+          <Button variant="contained" size="small" onClick={downloadLabels} sx={{ bgcolor: '#d13438', color: 'white' }}>
+			<PdfIcon fontSize="small" sx={{ mr: 0.5 }} /> PDF
+		  </Button>
+          <Button variant="contained" size="small" onClick={sendEmail} sx={{ bgcolor: '#35AB22', color: 'white' }}>
+            <EmailIcon fontSize="small" sx={{ mr: 0.5 }} /> Email
+          </Button>
+        </Stack>
+      </Paper>
+
+      {/* Cuerpo: pallets + preview drawer */}
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Lista de pallets */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap' }}>
+            <Chip label={`Pallets: ${selectedOrder.pallets.length}`} color="primary" />
+            <Chip label={`Artículos: ${Object.keys(items).length}`} color="success" />
+            <Chip label={`País: ${selectedOrder.shipToCountry || '--'}`} color="warning" />
+            <Chip label={`Envío: ${fmtDate(selectedOrder.shipmentDate)}`} />
+          </Stack>
+
+          {Object.entries(items).map(([no, g]) => (
+            <Box key={no} sx={{ mb: 2 }}>
+              <Paper sx={{ p: 1, bgcolor: '#e6e8ea', mb: 1 }}>
+                <Typography variant="subtitle2"><strong>{no}</strong> - {g.info.itemDescription} <Chip label={`${g.list.length} pallets`} size="small" /></Typography>
+              </Paper>
+              <TableContainer component={Paper} sx={{ borderRadius: 0 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width={40}><Checkbox checked={selPallets.size === selectedOrder.pallets.length} onChange={toggleAll} /></TableCell>
+                      <TableCell>Pallet</TableCell>
+                      <TableCell>Lote</TableCell>
+                      <TableCell>Caducidad</TableCell>
+                      <TableCell>Peso (Kg)</TableCell>
+                      <TableCell>Cajas</TableCell>
+                      <TableCell align="right">Vista previa</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {g.list.map(p => {
+                      const sel = selPallets.has(p.id);
+                      return (
+                        <TableRow key={p.id} hover selected={preview?.id === p.id}>
+                          <TableCell><Checkbox checked={sel} onChange={() => toggleSel(p.id)} /></TableCell>
+                          <TableCell>{p.internalPalletNo}</TableCell>
+                          <TableCell>{p.lotNo}</TableCell>
+                          <TableCell>{fmtDate(p.expirationDate)}</TableCell>
+                          <TableCell>{p.initQuantity}</TableCell>
+                          <TableCell>{p.boxesPerPallet}</TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Vista previa">
+                              <IconButton size="small" color="primary" onClick={() => setPreview(p)}>
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           ))}
-        </div>
-        {preview&&(
-          <div style={{flex:1,borderLeft:`1px solid ${C.border}`,overflowY:"auto",padding:16,background:"#0d1117"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
-              <h3 style={{color:C.white,fontSize:14,fontWeight:600,margin:0}}>Vista previa</h3>
-              <div style={{display:"flex",gap:6}}>
-                {/* <button onClick={()=>printLabel(preview)} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Imprimir</button> */}
-                <button onClick={async ()=>{
-                  if(!preview) return;
-                  const res = await fetch(`${API}/generate-pdf`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderNo:selOrder,palletIds:[preview.id]})});
-                  if(res.ok){const blob=await res.blob();const link=document.createElement('a');link.href=window.URL.createObjectURL(new Blob([blob],{type:'application/pdf'}));link.download=`etiqueta_${preview.internalPalletNo}.pdf`;document.body.appendChild(link);link.click();document.body.removeChild(link)}
-                  else alert("Error generando PDF")
-                }} style={{background:C.accent,border:"none",color:"#fff",padding:"4px 10px",borderRadius:5,cursor:"pointer",fontSize:11}}>Descargar PDF</button>
-                <button onClick={()=>setPreview(null)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:16}}>X</button>
-              </div>
-            </div>
-            <div style={{background:"#fff",borderRadius:6,padding:16,color:"#000",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",maxWidth:460,margin:"0 auto"}}>
-              <div style={{display:"flex",justifyContent:"space-between",borderBottom:"3px solid #000",paddingBottom:6,marginBottom:8}}>
-                <div><div style={{fontSize:14,fontWeight:800}}>GLOBAL FOOD LINK S.L.</div></div>
-                <div style={{textAlign:"right"}}></div>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Supplier's PO</div><div style={{fontSize:13,fontWeight:700}}>{preview.salesOrderNo}</div></div>
-                <div style={{textAlign:"right"}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Customer's PO</div><div style={{fontSize:13,fontWeight:700}}>{preview.externalDocNo||"--"}</div></div>
-              </div>
-              <div style={{borderBottom:"1px solid #ddd",paddingBottom:5,marginBottom:5}}>
-                <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,borderBottom:"1px solid #eee",paddingBottom:2,marginBottom:3}}>Customer</div>
-                <div style={{display:"flex",gap:12}}>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Name</div><div style={{fontSize:14,fontWeight:700}}>{preview.customerName}</div></div>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Delivery Address</div><div style={{fontSize:10,fontWeight:700}}>{[preview.shipToAddress,preview.shipToPostCode,preview.shipToCity,preview.shipToCountry].filter(Boolean).join(", ")}</div></div>
-                </div>
-              </div>
-              <div style={{borderBottom:"1px solid #ddd",paddingBottom:5,marginBottom:5}}>
-                <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,borderBottom:"1px solid #eee",paddingBottom:2,marginBottom:3}}>Item</div>
-                <div style={{display:"flex",gap:8}}>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Supplier's Code</div><div style={{fontSize:16,fontWeight:800}}>{preview.itemNo}</div></div>
-                  <div style={{flex:2}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Description</div><div style={{fontSize:11,fontWeight:600}}>{preview.itemDescription}</div></div>
-                  <div style={{flex:1}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>ETIN/EAN</div><div style={{fontSize:10,fontWeight:600}}>{preview.eanCode||"--"}</div></div>
-                </div>
-                <div style={{marginTop:4}}><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Customer's Code</div><div style={{fontSize:14,fontWeight:700}}>{preview.itemRefNo||"--"}</div></div>
-              </div>
-              <div style={{borderBottom:"1px solid #ddd",paddingBottom:6,marginBottom:6}}>
-                <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,borderBottom:"1px solid #eee",paddingBottom:2,marginBottom:3}}>Details</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>SSCC</div><div style={{fontSize:14,fontWeight:700}}>{preview.sscc||"--"}</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Batch</div><div style={{fontSize:14,fontWeight:700}}>{preview.lotNo}</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Best Before</div><div style={{fontSize:14,fontWeight:700}}>{fmtDate(preview.expirationDate)}</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Net Weight</div><div style={{fontSize:14,fontWeight:700}}>{preview.initQuantity} Kg</div></div>
-                  <div><div style={{fontSize:7,color:"#999",textTransform:"uppercase"}}>Boxes</div><div style={{fontSize:14,fontWeight:700}}>{preview.boxesPerPallet}</div></div>
-                  <div></div>
-                </div>
-              </div>
-              <div>
-                <div style={{fontSize:8,color:"#333",textTransform:"uppercase",letterSpacing:1,fontWeight:700,marginBottom:4}}>GS1-128</div>
-                {preview.gs1Line1 && <div style={{background:"#f8f8f8",borderRadius:4,padding:8,marginBottom:6,textAlign:"center"}}>
-                  <div style={{fontSize:8,color:"#666",marginBottom:4}}>(02) GTIN + (15) Best Before + (17) Expiry + (10) Batch</div>
-                  <img src={`/api/barcode?data=${encodeURIComponent(preview.gs1Line1)}&height=14`} alt="GS1 Line 1" style={{width:"90%",height:55}} />
-                  <div style={{fontFamily:"monospace",fontSize:8,marginTop:2,color:"#444"}}>{preview.gs1Line1HR}</div>
-                </div>}
-                {preview.gs1Line2 && <div style={{background:"#f8f8f8",borderRadius:4,padding:8,marginBottom:6,textAlign:"center"}}>
-                  <div style={{fontSize:8,color:"#666",marginBottom:4}}>(37) Boxes + (3102) Net Weight</div>
-                  <img src={`/api/barcode?data=${encodeURIComponent(preview.gs1Line2)}&height=14`} alt="GS1 Line 2" style={{width:"90%",height:55}} />
-                  <div style={{fontFamily:"monospace",fontSize:8,marginTop:2,color:"#444"}}>{preview.gs1Line2HR}</div>
-                </div>}
-                <div style={{borderTop:"2px solid #000",paddingTop:6,marginTop:6,background:"#f0f0f0",borderRadius:4,padding:8,textAlign:"center"}}>
-                  <div style={{fontSize:8,color:"#666",marginBottom:4}}>(00) SSCC</div>
-                  <img src={`/api/barcode?data=${encodeURIComponent(preview.gs1Line3)}&height=16`} alt="SSCC" style={{width:"90%",height:60}} />
-                  <div style={{fontFamily:"monospace",fontSize:10,fontWeight:700,marginTop:2,letterSpacing:1}}>{preview.gs1Line3HR}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        </Box>
+
+        {/* Drawer de preview con animación */}
+        <Drawer
+          anchor="right"
+          open={!!preview}
+          onClose={() => setPreview(null)}
+          variant="persistent"
+          sx={{
+            flexShrink: 0,
+            '& .MuiDrawer-paper': { width: { xs: '100%', sm: '50%', md: '40%' }, boxSizing: 'border-box', p: 2, bgcolor: '#ffffff' },
+          }}
+        >
+          {preview && (
+            <>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Vista previa</Typography>
+                <IconButton onClick={() => setPreview(null)}><ArrowBackIcon /></IconButton>
+              </Box>
+              <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, boxShadow: 1 }}>
+                <div dangerouslySetInnerHTML={{ __html: generateLabelHTML(preview) }} />
+                <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                  <Button variant="contained" color="primary" size="small" onClick={() => printLabel(preview)}><PrintIcon fontSize="small" sx={{ mr: 0.5 }} /> Imprimir</Button>
+                  <Button variant="outlined" size="small" onClick={async () => {
+                    if (!preview) return;
+                    const res = await fetch(`${API}/generate-pdf`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderNo: selOrder, palletIds: [preview.id] }) });
+                    if (res.ok) { const blob = await res.blob(); const link = document.createElement('a'); link.href = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })); link.download = `etiqueta_${preview.internalPalletNo}.pdf`; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+                    else alert("Error generando PDF");
+                  }}><PdfIcon fontSize="small" sx={{ mr: 0.5 }} /> Descargar PDF</Button>
+                </Box>
+              </Box>
+            </>
+          )}
+        </Drawer>
+      </Box>
+    </Box>
   );
 }
 
