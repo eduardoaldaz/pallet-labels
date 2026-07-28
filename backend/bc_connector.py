@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 
-BC_BASE_URL = os.getenv("BC_ODATA_URL", "https://api.businesscentral.dynamics.com/v2.0/7bd617d8-1150-4669-b1fe-3fddd532dd57/Production/ODataV4/Company('Global%20Food%20Link%20S.L')")
+BC_BASE_URL = os.getenv("BC_ODATA_URL", "https://api.businesscentral.dynamics.com/v2.0/...")
 
 # OAuth2 Client Credentials
 BC_TENANT_ID = os.getenv("BC_TENANT_ID", "")
