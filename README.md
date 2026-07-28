@@ -1,4 +1,4 @@
-# Pallet Labels - Global Food Link S.L.
+# Pallet Labels - App
 
 Aplicacion web para generar etiquetas de palet conectada directamente a Business Central.
 
